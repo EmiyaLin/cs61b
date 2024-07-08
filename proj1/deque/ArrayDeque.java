@@ -1,6 +1,9 @@
 package deque;
 
 import afu.org.checkerframework.checker.oigj.qual.O;
+import edu.princeton.cs.algs4.StdOut;
+import jh61b.junit.In;
+
 
 public class ArrayDeque<T> {
     private T[] items;
