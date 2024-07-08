@@ -1,8 +1,5 @@
 package deque;
 
-import edu.princeton.cs.algs4.StdOut;
-import jh61b.junit.In;
-
 public class LinkedListDeque<T> {
     /**
      * sentinel.next指向循环队列的第一个节点、sentinel.prev指向循环队列的最后一个节点。
