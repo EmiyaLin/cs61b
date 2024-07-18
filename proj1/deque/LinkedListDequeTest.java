@@ -124,4 +124,13 @@ public class LinkedListDequeTest {
         }
 
     }
+
+    @Test
+    public void ADequeTest() {
+        ArrayDeque<Integer> arrayDeque = new ArrayDeque<Integer>();
+        for (int i = 0; i < 8; i ++) {
+            arrayDeque.addFirst(i);
+        }
+        assertEquals(4, (int) arrayDeque.get(3));
+    }
 }

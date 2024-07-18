@@ -79,6 +79,6 @@ public class ArrayDeque<T> {
         if (index > size) {
             return null;
         }
-        return items[index];
+        return items[(first + index + 1) % size];
     }
 }
