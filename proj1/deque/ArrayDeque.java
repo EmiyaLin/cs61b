@@ -57,11 +57,10 @@ public class ArrayDeque<T> {
         if (size == 0) {
             return null;
         }
-        T x = items[0];
-        T[] a = (T[]) new Object[size - 1];
-        System.arraycopy(items, 1, a, 0, size - 1);
+        T x = items[first];
+        items[first] = null;
+        first = (first + 1) % len;
         size -= 1;
-        items = a;
         return x;
     }
 
