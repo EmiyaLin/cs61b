@@ -2,10 +2,10 @@ package deque;
 
 public class ArrayDeque<T> {
     private T[] items;
-    int size;
-    int first;
-    int last;
-    int len = 8;
+    private int size;
+    private int first;
+    private int last;
+    private int len = 8;
 
     public ArrayDeque() {
         items = (T[]) new Object[len];
@@ -15,12 +15,12 @@ public class ArrayDeque<T> {
     }
 
     public void addFirst(T item) {
-        items[first] = item;
         if (first - 1 < 0) {
             first = len - 1;
         } else {
             first -= 1;
         }
+        items[first] = item;
         size += 1;
     }
 
@@ -79,6 +79,6 @@ public class ArrayDeque<T> {
         if (index > size) {
             return null;
         }
-        return items[(first + index + 1) % size];
+        return items[(first + index) % len];
     }
 }
