@@ -8,15 +8,14 @@ public class ArrayDequeTest {
     @Test
     public void ADequeTest() {
         ArrayDeque<Integer> arrayDeque = new ArrayDeque<Integer>();
-        for (int i = 0; i < 7; i ++) {
-            arrayDeque.addFirst(i);
-        }
-        for (int i = 0; i < 7; i ++) {
-            arrayDeque.removeFirst();
-        }
-        for (int i = 0; i < 7; i ++) {
-            arrayDeque.addLast(i);
-        }
-        assertEquals(1, (int) arrayDeque.get(1));
+        arrayDeque.addLast(1);
+        arrayDeque.addLast(2);
+        arrayDeque.addFirst(3);
+        arrayDeque.addLast(4);
+        arrayDeque.addLast(5);
+        arrayDeque.addLast(6);
+        arrayDeque.addLast(7);
+        arrayDeque.addLast(8);
+        assertEquals(2, (int) arrayDeque.get(2));
     }
 }
