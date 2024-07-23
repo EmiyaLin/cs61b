@@ -1,6 +1,8 @@
 package deque;
 
-public class LinkedListDeque<T> implements Deque<T> {
+import java.util.Iterator;
+
+public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     /**
      * sentinel.next指向循环队列的第一个节点、sentinel.prev指向循环队列的最后一个节点。
      */
@@ -136,6 +138,30 @@ public class LinkedListDeque<T> implements Deque<T> {
                 p = p.next;
             }
             return p.item;
+        }
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new LinkedListDequeIterator();
+    }
+
+    private class LinkedListDequeIterator implements Iterator<T> {
+        private Node h;
+
+        public LinkedListDequeIterator() {
+            h = sentinel.next;
+        }
+        @Override
+        public boolean hasNext() {
+            return h != null && h != sentinel;
+        }
+
+        @Override
+        public T next() {
+            T returnItem = h.item;
+            h = h.next;
+            return returnItem;
         }
     }
 }

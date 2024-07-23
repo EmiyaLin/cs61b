@@ -1,11 +1,13 @@
 package deque;
 
-public class ArrayDeque<T> implements Deque<T> {
+import java.util.Iterator;
+
+public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private T[] items;
     private int size;
     private int first;
     private int last;
-    private int len = 8;
+    private int len = 10;
 
     public ArrayDeque() {
         items = (T[]) new Object[len];
@@ -30,9 +32,11 @@ public class ArrayDeque<T> implements Deque<T> {
         size += 1;
     }
 
+    /*Todo: fix the bug when resizing the array deque*/
     private void resize(int capacity) {
         T[] a = (T[]) new Object[capacity];
-        System.arraycopy(items, 0, a, 0, capacity);
+        len = capacity;
+        System.arraycopy(items, 0, a, 0, size);
         items = a;
     }
 
@@ -100,5 +104,29 @@ public class ArrayDeque<T> implements Deque<T> {
             return null;
         }
         return items[(first + index) % len];
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        return new ArrayDequeIterator();
+    }
+
+    private class ArrayDequeIterator implements Iterator<T> {
+        private int pos;
+        public ArrayDequeIterator() {
+            pos = first;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return pos != last;
+        }
+
+        @Override
+        public T next() {
+            T returnItem = items[pos];
+            pos = (pos + 1) % size;
+            return returnItem;
+        }
     }
 }
