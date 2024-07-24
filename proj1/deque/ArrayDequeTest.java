@@ -45,4 +45,20 @@ public class ArrayDequeTest {
             assertEquals("should be same", 10 - i, (int) adq.removeFirst());
         }
     }
+
+    @Test
+    public void testAD_basic() {
+        ArrayDeque<Integer> adq = new ArrayDeque<>();
+        adq.isEmpty();
+        adq.addFirst(1);
+        adq.addFirst(2);
+        adq.removeLast();
+        adq.removeLast();
+        adq.isEmpty();
+        adq.isEmpty();
+        adq.isEmpty();
+        adq.isEmpty();
+        adq.addFirst(9);
+        assertEquals(9, (int) adq.removeLast());
+    }
 }

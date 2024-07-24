@@ -70,14 +70,6 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
     }
 
     /**
-     * Returns true if deque is empty, false otherwise.
-     */
-    @Override
-    public boolean isEmpty() {
-        return size == 0;
-    }
-
-    /**
      * Prints the items in the deque from first to last, separated by a space. Once all the
      * items have been printed, print out a new line.
      */
@@ -129,7 +121,7 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
      */
     @Override
     public T get(int index) {
-        if (index + 1 > size) {
+        if (index < 0 || index >= size) {
             return null;
         } else {
             Node p = sentinel.next;
@@ -139,6 +131,20 @@ public class LinkedListDeque<T> implements Deque<T>, Iterable<T> {
             }
             return p.item;
         }
+    }
+
+    public T getRecursive(int index) {
+        if (index < 0 || index >= size) {
+            return null;
+        }
+        return getRecursiveHelper(index, sentinel.next);
+    }
+
+    private T getRecursiveHelper(int index, Node cur) {
+        if (index == 0) {
+            return cur.item;
+        }
+        return getRecursiveHelper(index - 1, cur.next);
     }
 
     @Override
