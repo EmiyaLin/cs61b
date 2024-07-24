@@ -41,5 +41,8 @@ public class ArrayDequeTest {
             adq.addFirst(i);
         }
         adq.addFirst(10);
+        for (int i = 0; i < 11; i ++) {
+            assertEquals("should be same", 10 - i, (int) adq.removeFirst());
+        }
     }
 }

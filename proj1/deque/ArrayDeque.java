@@ -7,7 +7,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private int size;
     private int first;
     private int last;
-    private int len = 10;
+    private int len = 8;
 
     public ArrayDeque() {
         items = (T[]) new Object[len];
@@ -16,10 +16,27 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         last = 0;
     }
 
+    /*Todo: fix the bug when resizing the array deque*/
+    private void resize(int capacity) {
+        T[] a = (T[]) new Object[capacity];
+        boolean direction = first <= last;
+        if (direction) {
+            System.arraycopy(items, first, a, 0, size);
+        } else {
+            int firstPartSize = len - first;
+            System.arraycopy(items, first, a, 0, firstPartSize);
+            System.arraycopy(items, 0, a, firstPartSize, last + 1);
+        }
+        first = 0;
+        last = size - 1;
+        len = capacity;
+        items = a;
+    }
+
     @Override
     public void addFirst(T item) {
-        if (size == items.length) {
-            resize((int) (size * 1.1));
+        if (size == len) {
+            resize((int) (len * 1.5));
         }
         if (items[first] != null) {
             if (first - 1 < 0) {
@@ -32,18 +49,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         size += 1;
     }
 
-    /*Todo: fix the bug when resizing the array deque*/
-    private void resize(int capacity) {
-        T[] a = (T[]) new Object[capacity];
-        len = capacity;
-        System.arraycopy(items, 0, a, 0, size);
-        items = a;
-    }
-
     @Override
     public void addLast(T item) {
-        if (size == items.length) {
-            resize((int) (size * 1.1));
+        if (size == len) {
+            resize((int) (len * 1.5));
         }
         if (items[last] != null) {
             if (last + 1 == len) {
@@ -76,6 +85,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T removeFirst() {
+        if (size * 1.0 / len <= 0.25) {
+            resize(len / 2);
+        }
         if (size == 0) {
             return null;
         }
@@ -88,6 +100,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T removeLast() {
+        if (size * 1.0 / len <= 0.25) {
+            resize(len / 2);
+        }
         if (size == 0) {
             return null;
         }
@@ -113,6 +128,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     private class ArrayDequeIterator implements Iterator<T> {
         private int pos;
+
         public ArrayDequeIterator() {
             pos = first;
         }
