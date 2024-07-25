@@ -136,4 +136,15 @@ public class LinkedListDequeTest {
             checkValue += 1;
         }
     }
+
+    @Test
+    public void LLDEqualsTest() {
+        LinkedListDeque<String> lld1 = new LinkedListDeque<>();
+        LinkedListDeque<String> lld2 = new LinkedListDeque<>();
+        for (int i = 0; i < 5; i ++) {
+            lld1.addLast("String" + i);
+            lld2.addLast("String" + i);
+        }
+        assertTrue(lld1.equals(lld2));
+    }
 }

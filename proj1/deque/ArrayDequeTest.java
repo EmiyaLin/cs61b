@@ -22,14 +22,14 @@ public class ArrayDequeTest {
 
     @Test
     public void ADQITest() {
-        ArrayDeque<Integer> adq = new ArrayDeque<>();
-        for (int i = 0; i < 5; i ++) {
-            adq.addLast(i);
+        ArrayDeque<String> adq = new ArrayDeque<>();
+        for (int i = 0; i < 100; i++) {
+            adq.addLast("String" + i);
         }
 
         int checkValue = 0;
-        for (int i : adq) {
-            assertEquals("The value should be same", checkValue, i);
+        for (String i : adq) {
+            assertEquals("The value should be same", "String" + checkValue, i);
             checkValue += 1;
         }
     }

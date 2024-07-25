@@ -99,7 +99,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public T removeLast() {
-        if (size >= 16 && size * 1.0 / len <= 0.25) {
+        if (size >= 16 && size * 1.0 / len <= 0.35) {
             resize(len / 2);
         }
         if (size == 0) {
@@ -135,7 +135,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             for (int i = 0; i < size; i++) {
-                if (this.get(i) != deque.get(i)) {
+                if (!this.get(i).equals(deque.get(i))) {
                     return false;
                 }
             }
