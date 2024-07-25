@@ -3,7 +3,9 @@ package deque;
 import jh61b.junit.In;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import java.util.Iterator;
+
+import static org.junit.Assert.*;
 
 public class ArrayDequeTest {
     @Test
@@ -37,11 +39,11 @@ public class ArrayDequeTest {
     @Test
     public void testResize() {
         ArrayDeque<Integer> adq = new ArrayDeque<>();
-        for (int i = 0; i < 10; i ++) {
+        for (int i = 0; i < 10; i++) {
             adq.addFirst(i);
         }
         adq.addFirst(10);
-        for (int i = 0; i < 11; i ++) {
+        for (int i = 0; i < 11; i++) {
             assertEquals("should be same", 10 - i, (int) adq.removeFirst());
         }
     }
@@ -72,5 +74,19 @@ public class ArrayDequeTest {
             adq.removeFirst();
         }
         assertEquals(true, adq.size() <= 8);
+    }
+
+    @Test
+    public void iteratorTest() {
+        ArrayDeque<String> adq = new ArrayDeque<>();
+        Iterator<String> adqIterator = adq.iterator();
+        for (int i = 0; i < 10; i++) {
+            adq.addLast("String" + i);
+        }
+        for (int i = 0; i < 10; i ++) {
+            assertTrue("should be true", adqIterator.hasNext());
+            assertEquals("String" + i, adqIterator.next());
+        }
+        assertFalse("should be false", adqIterator.hasNext());
     }
 }
