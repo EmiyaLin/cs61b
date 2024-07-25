@@ -134,7 +134,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
             if (deque.size() != this.size()) {
                 return false;
             }
-            for (int i = 0; i < size; i ++) {
+            for (int i = 0; i < size; i++) {
                 if (this.get(i) != deque.get(i)) {
                     return false;
                 }
@@ -152,7 +152,7 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
     private class ArrayDequeIterator implements Iterator<T> {
         private int pos;
 
-        public ArrayDequeIterator() {
+        ArrayDequeIterator() {
             pos = first;
         }
 
