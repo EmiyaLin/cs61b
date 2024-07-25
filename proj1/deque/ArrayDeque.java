@@ -160,14 +160,10 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
         @Override
         public boolean hasNext() {
-//            return (check != 0 && pos != first) && (pos != (last + 1) % size || pos == first);
-            if (check != 0 && pos == first) {
-                return false;
-            }
-            if (pos != (last + 1) % size || pos == first) {
-                return true;
+            if (check == 0) {
+                return pos != (last + 1) % size || pos == first;
             } else {
-                return false;
+                return pos != (last + 1) % size;
             }
         }
 
@@ -175,7 +171,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
         public T next() {
             T returnItem = items[pos];
             pos = (pos + 1) % size;
-            check += 1;
+            if (pos == first) {
+                check += 1;
+            }
             return returnItem;
         }
     }
