@@ -61,4 +61,16 @@ public class ArrayDequeTest {
         adq.addFirst(9);
         assertEquals(9, (int) adq.removeLast());
     }
+
+    @Test
+    public void memTest() {
+        ArrayDeque<Integer> adq = new ArrayDeque<>();
+        for (int i = 0; i < 64; i++) {
+            adq.addFirst(i);
+        }
+        for (int i = 0; i < 63; i++) {
+            adq.removeFirst();
+        }
+        assertEquals(true, adq.size() <= 8);
+    }
 }
