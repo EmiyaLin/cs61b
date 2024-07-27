@@ -79,14 +79,20 @@ public class ArrayDequeTest {
     @Test
     public void iteratorTest() {
         ArrayDeque<String> adq = new ArrayDeque<>();
-        Iterator<String> adqIterator = adq.iterator();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 8; i++) {
+            adq.addFirst("String" + i);
+        }
+        for (int i = 8; i < 16; i ++) {
             adq.addLast("String" + i);
         }
         for (int i = 0; i < 10; i ++) {
-            assertTrue("should be true", adqIterator.hasNext());
-            assertEquals("String" + i, adqIterator.next());
+            adq.removeFirst();
         }
-        assertFalse("should be false", adqIterator.hasNext());
+        adq.printDeque();
+        Iterator<String> arrayDequeIterator =  adq.iterator();
+        for (int i = 10; i < 16; i ++) {
+            assertTrue(arrayDequeIterator.hasNext());
+            assertEquals("String" + i, arrayDequeIterator.next());
+        }
     }
 }

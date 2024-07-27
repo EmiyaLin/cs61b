@@ -72,10 +72,39 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     @Override
     public void printDeque() {
-        for (T item : items) {
-            System.out.print(item + " ");
+        boolean obey = (last - first + 1) == size;
+        boolean dir = last >= first;
+        if (obey) {
+            if (dir) {
+                for (int i = first; i <= last; i++) {
+                    System.out.print(items[i] + " ");
+                }
+                System.out.println();
+            } else {
+                for (int i = first; i >= last; i--) {
+                    System.out.print(items[i] + " ");
+                }
+                System.out.println();
+            }
+        } else {
+            if (dir) {
+                for (int i = first; i >= 0; i--) {
+                    System.out.print(items[i] + " ");
+                }
+                for (int i = len - 1; i >= last; i--) {
+                    System.out.print(items[i] + " ");
+                }
+                System.out.println();
+            } else {
+                for (int i = first; i <= len - 1; i++) {
+                    System.out.print(items[i] + " ");
+                }
+                for (int i = 0; i <= last; i++) {
+                    System.out.print(items[i] + " ");
+                }
+                System.out.println();
+            }
         }
-        System.out.println();
     }
 
     @Override
@@ -151,28 +180,54 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
     private class ArrayDequeIterator implements Iterator<T> {
         private int pos;
-        private int check;
 
         ArrayDequeIterator() {
             pos = first;
-            check = 0;
+
         }
 
         @Override
         public boolean hasNext() {
-            if (check == 0) {
-                return pos != (last + 1) % size || pos == first;
+            if (pos == -1) {
+                return false;
+            }
+            boolean obey = (last - first + 1) == size;
+            if (obey) {
+                return (pos <= last && pos >= first) || (pos <= first && pos >= last);
             } else {
-                return pos != (last + 1) % size;
+                return (pos >= last && pos <= len - 1 && pos >= 0 && pos <= first) || (pos >= first && pos <= len - 1 && pos >= 0 && pos <= last);
             }
         }
 
         @Override
         public T next() {
+            boolean obey = (last - first + 1) == size;
+            boolean dir = first <= last;
             T returnItem = items[pos];
-            pos = (pos + 1) % size;
-            if (pos == first) {
-                check += 1;
+            if (size == len && pos == last) {
+                pos = -1;
+                return returnItem;
+            }
+            if (obey) {
+                if (dir) {
+                    pos += 1;
+                } else {
+                    pos -= 1;
+                }
+            } else {
+                if (dir) {
+                    if (pos - 1 < 0) {
+                        pos = len - 1;
+                    } else {
+                        pos -= 1;
+                    }
+                } else {
+                    if (pos + 1 == len) {
+                        pos = 0;
+                    } else {
+                        pos += 1;
+                    }
+                }
             }
             return returnItem;
         }
