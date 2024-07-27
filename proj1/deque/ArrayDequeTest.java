@@ -88,11 +88,13 @@ public class ArrayDequeTest {
         for (int i = 0; i < 10; i ++) {
             adq.removeFirst();
         }
-        adq.printDeque();
         Iterator<String> arrayDequeIterator =  adq.iterator();
         for (int i = 10; i < 16; i ++) {
             assertTrue(arrayDequeIterator.hasNext());
             assertEquals("String" + i, arrayDequeIterator.next());
         }
+        arrayDequeIterator.next();
+        arrayDequeIterator.next();
+        assertFalse(arrayDequeIterator.hasNext());
     }
 }

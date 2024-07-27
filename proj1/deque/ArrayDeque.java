@@ -188,6 +188,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
         @Override
         public boolean hasNext() {
+            if (size == 0) {
+                return false;
+            }
             if (pos == -1) {
                 return false;
             }
@@ -201,6 +204,9 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
 
         @Override
         public T next() {
+            if (!hasNext()) {
+                return null;
+            }
             boolean obey = (last - first + 1) == size;
             boolean dir = first <= last;
             T returnItem = items[pos];
