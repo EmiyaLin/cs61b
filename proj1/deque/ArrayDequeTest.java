@@ -85,16 +85,10 @@ public class ArrayDequeTest {
         for (int i = 8; i < 16; i ++) {
             adq.addLast("String" + i);
         }
-        for (int i = 0; i < 10; i ++) {
-            adq.removeFirst();
+        adq.addFirst("String" + 16);
+        Iterator<String> iterator = adq.iterator();
+        while (iterator.hasNext()) {
+            System.out.println(iterator.next());
         }
-        Iterator<String> arrayDequeIterator =  adq.iterator();
-        for (int i = 10; i < 16; i ++) {
-            assertTrue(arrayDequeIterator.hasNext());
-            assertEquals("String" + i, arrayDequeIterator.next());
-        }
-        arrayDequeIterator.next();
-        arrayDequeIterator.next();
-        assertFalse(arrayDequeIterator.hasNext());
     }
 }

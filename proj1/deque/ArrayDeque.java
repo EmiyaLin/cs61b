@@ -195,10 +195,19 @@ public class ArrayDeque<T> implements Deque<T>, Iterable<T> {
                 return false;
             }
             boolean obey = (last - first + 1) == size;
+            boolean dir = first <= last;
             if (obey) {
-                return (pos <= last && pos >= first) || (pos <= first && pos >= last);
+                if (dir) {
+                    return pos >= first && pos <= last;
+                } else {
+                    return pos >= last && pos <= first;
+                }
             } else {
-                return (pos >= last && pos <= len - 1 && pos >= 0 && pos <= first) || (pos >= first && pos <= len - 1 && pos >= 0 && pos <= last);
+                if (dir) {
+                    return (pos <= first && pos >= 0) || (pos <= len - 1 && pos >= last);
+                } else {
+                    return (pos >= first && pos <= len - 1) || (pos <= last && pos >= 0);
+                }
             }
         }
 
