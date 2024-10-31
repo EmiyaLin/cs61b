@@ -1,6 +1,6 @@
 # Gitlet Design Document
 
-**Name**:
+**Name**: Xinran Zhao
 
 ## Classes and Data Structures
 
