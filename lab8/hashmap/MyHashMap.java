@@ -103,16 +103,26 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
         return buckets;
     }
 
+
+    private void resize(int size) {
+        bucketSize *= 2;
+        Collection<Node>[] temp = createTable(size * 2);
+        for (Collection<Node> bucket : buckets) {
+            for (Node node : bucket) {
+                int i = hash(node.key);
+                temp[i].add(createNode(node.key, node.value));
+            }
+        }
+        buckets = temp;
+    }
+
     // TODO: Implement the methods of the Map61B Interface below
     // Your code won't compile until you do so!
     public void clear() {
         for (Collection<Node> bucket : buckets) {
-            for (Node node : bucket) {
-                bucket.remove(node);
-            }
+            bucket.clear();
         }
         this.size = 0;
-        this.bucketSize = 0;
     }
 
     private int hash(K key) {
@@ -138,8 +148,21 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
     }
 
     public void put(K key, V value) {
-        buckets[hash(key)].add(createNode(key, value));
-        size += 1;
+        if (!containsKey(key)) {
+            int i = hash(key);
+            buckets[i].add(createNode(key, value));
+            size += 1;
+            if ((double) size / bucketSize > loadFactor) {
+                resize(bucketSize);
+            }
+        } else {
+            int i = hash(key);
+            for (Node node : buckets[i]) {
+                if (node.key.equals(key)) {
+                    node.value = value;
+                }
+            }
+        }
     }
 
     public Set<K> keySet() {
