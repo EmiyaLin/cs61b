@@ -106,7 +106,7 @@ public class MyHashMap<K, V> implements Map61B<K, V> {
 
     private void resize(int size) {
         bucketSize *= 2;
-        Collection<Node>[] temp = createTable(size * 2);
+        Collection<Node>[] temp = createTable(bucketSize);
         for (Collection<Node> bucket : buckets) {
             for (Node node : bucket) {
                 int i = hash(node.key);
