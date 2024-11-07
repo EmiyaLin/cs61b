@@ -2,6 +2,7 @@ package gitlet;
 
 import jdk.jshell.execution.Util;
 
+import javax.management.remote.JMXServerErrorException;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
@@ -39,7 +40,7 @@ public class Repository {
 
     public static final File GITLET_BLOB = join(GITLET_DIR, "blob");
 
-    private static final File GITLET_STAGINGAREA = join(GITLET_DIR, "stagingArea");
+    public static final File GITLET_STAGINGAREA = join(GITLET_DIR, "stagingArea");
 
     public static final File HEAD = join(GITLET_DIR, "HEAD");
 
@@ -83,19 +84,19 @@ public class Repository {
      * and remove it from the staging area if it is already there (as can happen when a file is changed, added, and then changed back to it’s original version).
      * The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
      */
+    /**
+     * 要把stagingFile 存入 缓存区
+     * 1. If the current working version of the file is identical to the version in the current commit, do not stage it to be added,
+     *    and remove it from the staging area if it is already there
+     * 1. 先判断一下currentCommit里有没有这个文件啊
+     */
     public static void add(String filename) throws IOException {
         String fileContent = Utils.readContentsAsString(join(CWD, filename));
         System.out.println("original file content: " + fileContent);
         String uid = Utils.sha1(fileContent);
         File stagingFile = Utils.join(GITLET_STAGINGAREA, filename);
         List<String> stagingFilesList = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
-        /**
-         * 要把stagingFile 存入 缓存区
-         * 1. If the current working version of the file is identical to the version in the current commit, do not stage it to be added,
-         *    and remove it from the staging area if it is already there
-         * 1. 先判断一下currentCommit里有没有这个文件啊
-         */
-        if (getCurrentCommit().getFile().contains(uid)) {
+        if (getCurrentCommit().getTrackingFile().containsKey(filename)) {
             if (stagingFilesList.contains(filename)) {
                 stagingFilesList.remove(filename);
                 stagingFile.delete();
@@ -104,7 +105,6 @@ public class Repository {
             if (!stagingFilesList.contains(filename)) {
                 stagingFile.createNewFile();
                 Utils.writeContents(stagingFile, fileContent);
-                stagingFilesList.add(filename);
             } else {
                 System.out.println("read from file: " + readContentsAsString(stagingFile));
                 Utils.writeContents(stagingFile, fileContent);
@@ -120,9 +120,33 @@ public class Repository {
     }
 
     /**
-     * Saves a snapshot of tracked files in the current commit and staging area so they can be restored at a later time, creating a new commit. The commit is said to be tracking the saved files. By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files; it will keep versions of files exactly as they are, and not update them. A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit, in which case the commit will now include the version of the file that was staged instead of the version it got from its parent. A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent. Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
+     * Saves a snapshot of tracked files in the current commit and staging area so they can be restored at a later time,
+     * creating a new commit. The commit is said to be tracking the saved files.
+     * By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
+     * it will keep versions of files exactly as they are, and not update them.
+     * A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit,
+     * in which case the commit will now include the version of the file that was staged instead of the version it got from its parent.
+     * A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent.
+     * Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
      */
-    public static void commit() {
+    public static void commit(String message) throws IOException {
+        Commit normalCommit = new Commit(message, new Date(), getCurrentCommit().getUID(),
+                getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA));
+        File commitFile = Utils.join(GITLET_COMMIT, normalCommit.getUID());
+        commitFile.createNewFile();
+        Utils.writeObject(commitFile, normalCommit);
+        Utils.writeContents(HEAD, normalCommit.getUID());
+        Utils.writeContents(MASTER, normalCommit.getUID());
+        clearStagingArea();
+    }
 
+    private static void clearStagingArea() {
+        List<String> stagingFiles = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
+        if (stagingFiles == null) {
+            return;
+        }
+        for (String filename : stagingFiles) {
+            join(GITLET_STAGINGAREA, filename).delete();
+        }
     }
 }

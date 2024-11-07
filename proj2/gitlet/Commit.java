@@ -2,9 +2,8 @@ package gitlet;
 
 // TODO: any imports you need here
 
-import jdk.jshell.execution.Util;
 
-import javax.xml.crypto.Data;
+import java.io.File;
 import java.io.Serializable;
 import java.util.*;
 
@@ -36,10 +35,10 @@ public class Commit implements Serializable {
     private Date timestamp;
 
     // The pointer points to the parent commit.
-    private Commit parent;
+    private String parent;
 
-    // file 存 Commit相关的Blob（uid)
-    private Set<String> file;
+    // file 存 Commit相关的Blob（uid) <Hello.txt, uid>
+    private Map<String, String> trackingFile;
 
     // TODO: UID to be finished, may be use
     private String UID;
@@ -61,17 +60,52 @@ public class Commit implements Serializable {
         this.timestamp = new Date(0);
         this.parent = null;
         this.UID = Utils.sha1(message, timestamp.toString());
-        this.file = new HashSet<>();
+        this.trackingFile = new HashMap<>();
 //        System.out.println(timestamp.toString());
 //        System.out.println(UID);
     }
+
+    /**
+     * 如果暂存区里的文件Commit里没有跟踪，那么就添加到Commit里
+     * 如果正在跟踪，那么只需要modify
+     * @param message
+     * @param timestamp
+     * @param parent
+     * @param trackingFile
+     * @param stagingFilesList
+     */
+    public Commit(String message, Date timestamp, String parent, Map<String, String> trackingFile ,
+                  List<String> stagingFilesList) {
+        this.message = message;
+        this.timestamp = timestamp;
+        this.parent = parent;
+        this.trackingFile = trackingFile;
+        for (String filename : stagingFilesList) {
+            File stagingFile = Utils.join(Repository.GITLET_STAGINGAREA, filename);
+            String stagingFileUid = Utils.sha1(Utils.readContentsAsString(stagingFile));
+            // 没有跟踪
+            if (!trackingFile.containsKey(filename)) {
+                trackingFile.put(filename, stagingFileUid);
+            } else {
+                trackingFile.remove(filename);
+                trackingFile.put(filename, stagingFileUid);
+            }
+            Utils.writeContents(Utils.join(Repository.GITLET_BLOB, stagingFileUid),
+                    Utils.readContentsAsString(Utils.join(Repository.GITLET_STAGINGAREA, filename)));
+        }
+        this.UID = Utils.sha1(message, timestamp.toString(), parent);
+    }
+
+//    public void trackStagingFiles(List<String> stagingFilesList) {
+//
+//    }
 
     public String getUID() {
         return UID;
     }
 
-    public Set<String> getFile() {
-        return file;
+    public Map<String, String> getTrackingFile() {
+        return trackingFile;
     }
 
 //    public String toString() {
