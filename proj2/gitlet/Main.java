@@ -12,7 +12,7 @@ public class Main {
     /** Usage: java gitlet.Main ARGS, where ARGS contains
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         // TODO: what if args is empty?
         if (args.length == 0) {
             System.out.println("Please enter a command");
@@ -26,7 +26,11 @@ public class Main {
                     System.out.println("A Gitlet version-control system already exists in the current directory.");
                     System.exit(0);
                 }
-                Repository.init();
+                try {
+                    Repository.init();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
@@ -35,7 +39,11 @@ public class Main {
                     System.exit(0);
                 }
                 String filename = args[1];
-                Repository.add(filename);
+                try {
+                    Repository.add(filename);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
                 break;
             // TODO: FILL THE REST IN
             case "commit":
@@ -44,7 +52,11 @@ public class Main {
                     System.exit(0);
                 }
                 String message = args[1];
-                Repository.commit(message);
+                try {
+                    Repository.commit(message);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
         }
     }
 }
