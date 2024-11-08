@@ -93,7 +93,7 @@ public class Commit implements Serializable {
             Utils.writeContents(Utils.join(Repository.GITLET_BLOB, stagingFileUid),
                     Utils.readContentsAsString(Utils.join(Repository.GITLET_STAGINGAREA, filename)));
         }
-        this.UID = Utils.sha1(message, timestamp.toString(), parent);
+        this.UID = Utils.sha1(message, timestamp.toString(), parent, stagingFilesList.toString());
     }
 
 //    public void trackStagingFiles(List<String> stagingFilesList) {
@@ -108,7 +108,7 @@ public class Commit implements Serializable {
         return trackingFile;
     }
 
-//    public String toString() {
-//        return this.message + this.timestamp + this.UID;
-//    }
+    public String toString() {
+        return this.message + ' ' + this.timestamp + ' ' + this.UID + " parent " + this.parent;
+    }
 }

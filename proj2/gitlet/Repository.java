@@ -67,8 +67,8 @@ public class Repository {
         BRANCH.mkdir();
         HEAD.createNewFile();
         MASTER.createNewFile();
-        Utils.writeObject(HEAD, initialCommit.getUID());
-        Utils.writeObject(MASTER, initialCommit.getUID());
+        Utils.writeContents(HEAD, initialCommit.getUID());
+        Utils.writeContents(MASTER, initialCommit.getUID());
         File commit = Utils.join(GITLET_COMMIT, initialCommit.getUID());
         commit.createNewFile();
         Utils.writeObject(commit, initialCommit);
@@ -114,8 +114,8 @@ public class Repository {
         }
     }
 
-    private static Commit getCurrentCommit() {
-        String currentCommitUid = Utils.readObject(HEAD, String.class);
+    public static Commit getCurrentCommit() {
+        String currentCommitUid = Utils.readContentsAsString(HEAD);
         return Utils.readObject(join(GITLET_COMMIT, currentCommitUid), Commit.class);
     }
 

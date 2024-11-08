@@ -2,6 +2,8 @@ package gitlet;
 
 import java.io.IOException;
 
+import static gitlet.Utils.join;
+
 /** Driver class for Gitlet, a subset of the Git version-control system.
  *  @author TODO
  */
@@ -20,15 +22,27 @@ public class Main {
         switch(firstArg) {
             case "init":
                 // TODO: handle the `init` command
+                if (Repository.GITLET_DIR.isDirectory()) {
+                    System.out.println("A Gitlet version-control system already exists in the current directory.");
+                    System.exit(0);
+                }
                 Repository.init();
                 break;
             case "add":
                 // TODO: handle the `add [filename]` command
+                if (args[1] == null || !join(Repository.CWD, args[1]).isFile()) {
+                    System.out.println("File does not exist.");
+                    System.exit(0);
+                }
                 String filename = args[1];
                 Repository.add(filename);
                 break;
             // TODO: FILL THE REST IN
             case "commit":
+                if (args[1] == null) {
+                    System.out.println("Please enter a commit message.");
+                    System.exit(0);
+                }
                 String message = args[1];
                 Repository.commit(message);
         }
