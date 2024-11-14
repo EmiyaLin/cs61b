@@ -1,9 +1,5 @@
 package gitlet;
 
-import jdk.jshell.execution.Util;
-
-import javax.management.remote.JMXServerErrorException;
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -42,6 +38,8 @@ public class Repository {
 
     public static final File GITLET_STAGINGAREA = join(GITLET_DIR, "stagingArea");
 
+    public static final File GITLET_REMOVALAREA = join(GITLET_DIR, "removalArea");
+
     public static final File HEAD = join(GITLET_DIR, "HEAD");
 
     public static final File BRANCH = join(GITLET_DIR, "branch");
@@ -64,6 +62,7 @@ public class Repository {
         GITLET_COMMIT.mkdir();
         GITLET_BLOB.mkdir();
         GITLET_STAGINGAREA.mkdir();
+        GITLET_REMOVALAREA.mkdir();
         BRANCH.mkdir();
         HEAD.createNewFile();
         MASTER.createNewFile();
@@ -87,31 +86,47 @@ public class Repository {
     /**
      * 要把stagingFile 存入 缓存区
      * 1. If the current working version of the file is identical to the version in the current commit, do not stage it to be added,
-     *    and remove it from the staging area if it is already there
+     * and remove it from the staging area if it is already there
      * 1. 先判断一下currentCommit里有没有这个文件啊
      */
     public static void add(String filename) throws IOException {
         String fileContent = Utils.readContentsAsString(join(CWD, filename));
-        System.out.println("original file content: " + fileContent);
+        System.out.println("original file content:\n" + fileContent);
         String uid = Utils.sha1(fileContent);
         File stagingFile = Utils.join(GITLET_STAGINGAREA, filename);
-        List<String> stagingFilesList = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
-        if (getCurrentCommit().getTrackingFile().containsKey(filename)) {
-            if (stagingFilesList.contains(filename)) {
-                stagingFilesList.remove(filename);
-                stagingFile.delete();
+        List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA)); // 暂存区
+        Commit currentCommit = getCurrentCommit();
+        if (currentCommit.getTrackingFile().containsKey(filename)) { // 要stage的文件被跟踪
+            if (checkIdentical(uid, filename)) {  // 判断内容和blob相同
+                if (stagingFilesList.contains(filename)) { // 判断暂存区内有
+                    System.out.println("Delete!");
+                    stagingFile.delete();
+                    stagingFilesList.remove(filename);
+                }
+                return;
             }
-        } else {
-            if (!stagingFilesList.contains(filename)) {
-                stagingFile.createNewFile();
-                Utils.writeContents(stagingFile, fileContent);
-            } else {
-                System.out.println("read from file: " + readContentsAsString(stagingFile));
-                Utils.writeContents(stagingFile, fileContent);
-            }
-            String content = Utils.readContentsAsString(stagingFile);
-            System.out.println("write in file: " + content);
         }
+        if (!stagingFilesList.contains(filename)) {
+            System.out.println("Create!");
+            stagingFile.createNewFile();
+            Utils.writeContents(stagingFile, fileContent);
+        } else {
+            System.out.println("Modify!");
+            System.out.println("read from file:\n" + readContentsAsString(stagingFile));
+            Utils.writeContents(stagingFile, fileContent);
+        }
+        String content = Utils.readContentsAsString(stagingFile);
+        System.out.println("write in file:\n" + content);
+    }
+
+    /**
+     判断当前commit里跟踪的blob文件和要stage的文件内容是否相同
+     * @param uid 要stage的文件内容的uid
+     * @param filename 要stage的文件名
+     * @return
+     */
+    private static boolean checkIdentical(String uid, String filename) {
+        return uid.equals(getCurrentCommit().getTrackingFile().get(filename));
     }
 
     public static Commit getCurrentCommit() {
@@ -131,13 +146,14 @@ public class Repository {
      */
     public static void commit(String message) throws IOException {
         Commit normalCommit = new Commit(message, new Date(), getCurrentCommit().getUID(),
-                getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA));
+                getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA), plainFilenamesIn(GITLET_REMOVALAREA));
         File commitFile = Utils.join(GITLET_COMMIT, normalCommit.getUID());
         commitFile.createNewFile();
         Utils.writeObject(commitFile, normalCommit);
         Utils.writeContents(HEAD, normalCommit.getUID());
         Utils.writeContents(MASTER, normalCommit.getUID());
         clearStagingArea();
+        clearRemovalArea();
     }
 
     private static void clearStagingArea() {
@@ -147,6 +163,40 @@ public class Repository {
         }
         for (String filename : stagingFiles) {
             join(GITLET_STAGINGAREA, filename).delete();
+        }
+    }
+
+   private static void clearRemovalArea() {
+        List<String> removalFiles = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
+        if (removalFiles == null) {
+            return;
+        }
+        for (String filename : removalFiles) {
+            join(GITLET_REMOVALAREA, filename).delete();
+        }
+   }
+
+    /**
+     * Unstage the file if it is currently staged for addition. If the file is tracked in the current commit, stage
+     * it for removal
+     * and remove the file from the working directory if the user has not already done so (do not remove it unless
+     * it is tracked in the current commit).
+     *
+     * @param filename
+     */
+    public static void rm(String filename) throws IOException {
+        Commit currentCommit = getCurrentCommit();
+        List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA));
+        Map<String, String> trackingFiles = currentCommit.getTrackingFile();
+        if (stagingFilesList.contains(filename)) {
+            join(GITLET_STAGINGAREA, filename).delete();
+        }
+        if (currentCommit.getTrackingFile().containsKey(filename)) {
+            join(GITLET_REMOVALAREA, filename).createNewFile();
+            Utils.writeContents(join(GITLET_REMOVALAREA, filename), currentCommit.getTrackingFile().get(filename));
+            if (join(CWD, filename).exists()) {
+                Utils.restrictedDelete(join(CWD, filename));
+            }
         }
     }
 }

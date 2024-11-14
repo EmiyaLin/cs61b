@@ -47,7 +47,7 @@ public class Main {
                 break;
             // TODO: FILL THE REST IN
             case "commit":
-                if (args[1] == null) {
+                if (args.length < 2) {
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
                 }
@@ -55,6 +55,13 @@ public class Main {
                 try {
                     Repository.commit(message);
                 } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                break;
+            case "rm":
+                try {
+                    Repository.rm(args[1]);
+                } catch(IOException e) {
                     throw new RuntimeException(e);
                 }
         }

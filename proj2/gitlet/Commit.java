@@ -68,6 +68,8 @@ public class Commit implements Serializable {
     /**
      * 如果暂存区里的文件Commit里没有跟踪，那么就添加到Commit里
      * 如果正在跟踪，那么只需要modify
+     * If the file is tracked in the current commit, stage it for removal and remove the file from the working
+     * directory if the user has not already done so (do not remove it unless it is tracked in the current commit)
      * @param message
      * @param timestamp
      * @param parent
@@ -75,11 +77,13 @@ public class Commit implements Serializable {
      * @param stagingFilesList
      */
     public Commit(String message, Date timestamp, String parent, Map<String, String> trackingFile ,
-                  List<String> stagingFilesList) {
+                  List<String> stagingFilesList, List<String> removalFilesList) {
         this.message = message;
         this.timestamp = timestamp;
         this.parent = parent;
-        this.trackingFile = trackingFile;
+        for (String removalFile : removalFilesList) {
+            trackingFile.remove(removalFile);
+        }
         for (String filename : stagingFilesList) {
             File stagingFile = Utils.join(Repository.GITLET_STAGINGAREA, filename);
             String stagingFileUid = Utils.sha1(Utils.readContentsAsString(stagingFile));
@@ -93,6 +97,7 @@ public class Commit implements Serializable {
             Utils.writeContents(Utils.join(Repository.GITLET_BLOB, stagingFileUid),
                     Utils.readContentsAsString(Utils.join(Repository.GITLET_STAGINGAREA, filename)));
         }
+        this.trackingFile = trackingFile;
         this.UID = Utils.sha1(message, timestamp.toString(), parent, stagingFilesList.toString());
     }
 
