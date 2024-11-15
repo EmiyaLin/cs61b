@@ -109,6 +109,16 @@ public class Commit implements Serializable {
         return UID;
     }
 
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
+    public String getMessage() {
+        return this.message;
+    }
+    public String getParent() {
+        return parent;
+    }
     public Map<String, String> getTrackingFile() {
         return trackingFile;
     }

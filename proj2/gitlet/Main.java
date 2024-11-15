@@ -64,6 +64,15 @@ public class Main {
                 } catch(IOException e) {
                     throw new RuntimeException(e);
                 }
+                break;
+            case "log":
+                Repository.log();
+                break;
+            case "global-log":
+                Repository.globalLog();
+                break;
+            case "checkout":
+                Repository.checkout(args[1]);
         }
     }
 }

@@ -46,6 +46,8 @@ public class Repository {
 
     public static final File MASTER = join(BRANCH, "master");
 
+    public static final File INITIALCOMMIT = join(GITLET_DIR, "initialCommit");
+
     public static String master;
 
 //    private static Set<String> stagingFilesSet = new HashSet<>();
@@ -66,8 +68,10 @@ public class Repository {
         BRANCH.mkdir();
         HEAD.createNewFile();
         MASTER.createNewFile();
+        INITIALCOMMIT.createNewFile();
         Utils.writeContents(HEAD, initialCommit.getUID());
         Utils.writeContents(MASTER, initialCommit.getUID());
+        Utils.writeContents(INITIALCOMMIT, initialCommit.getUID());
         File commit = Utils.join(GITLET_COMMIT, initialCommit.getUID());
         commit.createNewFile();
         Utils.writeObject(commit, initialCommit);
@@ -91,7 +95,6 @@ public class Repository {
      */
     public static void add(String filename) throws IOException {
         String fileContent = Utils.readContentsAsString(join(CWD, filename));
-        System.out.println("original file content:\n" + fileContent);
         String uid = Utils.sha1(fileContent);
         File stagingFile = Utils.join(GITLET_STAGINGAREA, filename);
         List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA)); // 暂存区
@@ -99,7 +102,6 @@ public class Repository {
         if (currentCommit.getTrackingFile().containsKey(filename)) { // 要stage的文件被跟踪
             if (checkIdentical(uid, filename)) {  // 判断内容和blob相同
                 if (stagingFilesList.contains(filename)) { // 判断暂存区内有
-                    System.out.println("Delete!");
                     stagingFile.delete();
                     stagingFilesList.remove(filename);
                 }
@@ -107,16 +109,12 @@ public class Repository {
             }
         }
         if (!stagingFilesList.contains(filename)) {
-            System.out.println("Create!");
             stagingFile.createNewFile();
             Utils.writeContents(stagingFile, fileContent);
         } else {
-            System.out.println("Modify!");
-            System.out.println("read from file:\n" + readContentsAsString(stagingFile));
             Utils.writeContents(stagingFile, fileContent);
         }
         String content = Utils.readContentsAsString(stagingFile);
-        System.out.println("write in file:\n" + content);
     }
 
     /**
@@ -198,5 +196,53 @@ public class Repository {
                 Utils.restrictedDelete(join(CWD, filename));
             }
         }
+    }
+
+    // Starting at the current head commit, display information about each commit backwards along the commit tree
+    // until the initial commit, following the first parent commit links, ignoring any second parents found in merge
+    // commits. (In regular Git, this is what you get with git log --first-parent). This set of commit nodes is
+    // called the commit’s history. For every node in this history, the information it should display is the commit
+    // id, the time the commit was made, and the commit message.
+    public static void log() {
+        Commit currentCommit = getCurrentCommit();
+        String initialCommitUid = Utils.readContentsAsString(INITIALCOMMIT);
+        while (!currentCommit.getUID().equals(initialCommitUid)) {
+            showCommitInfo(currentCommit);
+            String parentUid = currentCommit.getParent();
+            currentCommit = Utils.readObject(join(GITLET_COMMIT, parentUid),Commit.class);
+        }
+        showCommitInfo(currentCommit);
+    }
+
+    private static void showCommitInfo(Commit currentCommit) {
+        Formatter fomatter = new Formatter();
+        System.out.println("===");
+        System.out.println("commit " + currentCommit.getUID());
+        fomatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", currentCommit.getTimestamp());
+        System.out.println("Date: " + fomatter);
+        System.out.println(currentCommit.getMessage());
+        System.out.println();
+    }
+
+    private static Commit getCommit(String commitUid) {
+        return Utils.readObject(join(GITLET_COMMIT, commitUid), Commit.class);
+    }
+
+    public static void globalLog() {
+        List<String> commitUidList = Utils.plainFilenamesIn(GITLET_COMMIT);
+        for (String commitUid : commitUidList) {
+            showCommitInfo(getCommit(commitUid));
+        }
+    }
+
+    public static void checkout(String filename) {
+        Commit currentCommit = getCurrentCommit();
+        if (!currentCommit.getTrackingFile().containsKey(filename)) {
+            System.out.println("File does not exist in that commit.");
+            System.exit(0);
+        }
+        String trackingFileUid = currentCommit.getTrackingFile().get(filename);
+        String checkoutContent = Utils.readContentsAsString(join(GITLET_BLOB, trackingFileUid));
+        Utils.writeContents(join(CWD, filename), checkoutContent);
     }
 }
