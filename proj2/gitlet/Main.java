@@ -1,6 +1,7 @@
 package gitlet;
 
 import java.io.IOException;
+import java.util.List;
 
 import static gitlet.Utils.join;
 
@@ -72,7 +73,16 @@ public class Main {
                 Repository.globalLog();
                 break;
             case "checkout":
-                Repository.checkout(args[1]);
+                if (args.length == 2) {
+
+                } else if (args.length == 3 && args[1].equals("--")) {
+                    filename = args[2];
+                    Repository.checkout(filename);
+                } else if (args.length == 4 && args[2].equals("--")) {
+                    String commitUid = args[1];
+                    filename = args[3];
+                    Repository.checkout(commitUid, filename);
+                }
         }
     }
 }

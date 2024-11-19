@@ -48,6 +48,8 @@ public class Repository {
 
     public static final File INITIALCOMMIT = join(GITLET_DIR, "initialCommit");
 
+    public static final File CURRENT_BRANCH = join(GITLET_DIR, "current_branch");
+
     public static String master;
 
 //    private static Set<String> stagingFilesSet = new HashSet<>();
@@ -69,9 +71,11 @@ public class Repository {
         HEAD.createNewFile();
         MASTER.createNewFile();
         INITIALCOMMIT.createNewFile();
+        CURRENT_BRANCH.createNewFile();
         Utils.writeContents(HEAD, initialCommit.getUID());
         Utils.writeContents(MASTER, initialCommit.getUID());
         Utils.writeContents(INITIALCOMMIT, initialCommit.getUID());
+        Utils.writeContents(CURRENT_BRANCH, "master");
         File commit = Utils.join(GITLET_COMMIT, initialCommit.getUID());
         commit.createNewFile();
         Utils.writeObject(commit, initialCommit);
@@ -235,14 +239,46 @@ public class Repository {
         }
     }
 
+    /**
+     * Takes the version of the file as it exists in the head commit and puts it
+     * in the working directory, overwriting the version of the file that’s already there if there is one.
+     * The new version of the file is not staged.
+     * @param filename
+     */
     public static void checkout(String filename) {
         Commit currentCommit = getCurrentCommit();
-        if (!currentCommit.getTrackingFile().containsKey(filename)) {
+        checkoutFile(filename, currentCommit);
+    }
+
+    /**
+     * Takes the version of the file as it exists in the commit with the given id, and puts it in the working
+     * directory, overwriting the version of the file that’s already there if there is one.
+     * The new version of the file is not staged.
+     * @param commitUid
+     * @param filename
+     */
+    public static void checkout(String commitUid, String filename) {
+        Commit commit = getCommit(commitUid);
+        checkoutFile(filename, commit);
+    }
+
+    private static void checkoutFile(String filename, Commit commit) {
+        if (!commit.getTrackingFile().containsKey(filename)) {
             System.out.println("File does not exist in that commit.");
             System.exit(0);
         }
-        String trackingFileUid = currentCommit.getTrackingFile().get(filename);
+        String trackingFileUid = commit.getTrackingFile().get(filename);
         String checkoutContent = Utils.readContentsAsString(join(GITLET_BLOB, trackingFileUid));
         Utils.writeContents(join(CWD, filename), checkoutContent);
+        if (join(GITLET_STAGINGAREA, filename).isFile()) {
+            join(GITLET_STAGINGAREA, filename).delete();
+        }
+    }
+
+    public static void checkoutBranch(String branch) {
+        List<String> branches = Utils.plainFilenamesIn(BRANCH);
+        if (!branches.contains(branch)) {
+            System.out.println("No such branch exists");
+        }
     }
 }
