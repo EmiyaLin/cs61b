@@ -75,7 +75,7 @@ public class Repository {
         Utils.writeContents(HEAD, initialCommit.getUID());
         Utils.writeContents(MASTER, initialCommit.getUID());
         Utils.writeContents(INITIALCOMMIT, initialCommit.getUID());
-        Utils.writeContents(CURRENT_BRANCH, "master");
+        Utils.writeContents(CURRENT_BRANCH, initialCommit.getBranch());
         File commit = Utils.join(GITLET_COMMIT, initialCommit.getUID());
         commit.createNewFile();
         Utils.writeObject(commit, initialCommit);
@@ -147,8 +147,10 @@ public class Repository {
      * Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
      */
     public static void commit(String message) throws IOException {
+        String currentBranch = Utils.readContentsAsString(join(GITLET_DIR, "current_branch"));
         Commit normalCommit = new Commit(message, new Date(), getCurrentCommit().getUID(),
-                getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA), plainFilenamesIn(GITLET_REMOVALAREA));
+                getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA),
+                plainFilenamesIn(GITLET_REMOVALAREA), currentBranch);
         File commitFile = Utils.join(GITLET_COMMIT, normalCommit.getUID());
         commitFile.createNewFile();
         Utils.writeObject(commitFile, normalCommit);
@@ -275,10 +277,76 @@ public class Repository {
         }
     }
 
+    /**
+     * Takes all files in the commit at the head of the given branch, and puts them in the working directory,
+     * overwriting the versions of the files that are already there if they exist.
+     * Also, at the end of this command, the given branch will now be considered the current branch (HEAD).
+     * Any files that are tracked in the current branch but are not present in the checked-out branch are deleted.
+     * The staging area is cleared, unless the checked-out branch is the current branch (see Failure cases below).
+     * @param branch
+     */
     public static void checkoutBranch(String branch) {
         List<String> branches = Utils.plainFilenamesIn(BRANCH);
+        String commitUid = Utils.readContentsAsString(join(BRANCH, branch));
+        Commit commit = getCommit(commitUid);
+        Map<String, String> checkoutTrackingFile = commit.getTrackingFile();
+        Set<String> checkoutFileNames = checkoutTrackingFile.keySet();
+        Commit currentCommit = getCurrentCommit();
+        Map<String, String> currentTrackingFile = currentCommit.getTrackingFile();
         if (!branches.contains(branch)) {
             System.out.println("No such branch exists");
+            System.exit(0);
+        } else if (branch.equals(Utils.readContentsAsString(CURRENT_BRANCH))) {
+            System.out.println("No need to checkout the current branch.");
+            System.exit(0);
+        }  else if (untrackedFileCheck(checkoutTrackingFile, currentTrackingFile)) {
+            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.exit(0);
+        } else {
+            for (String checkoutFileName : checkoutFileNames) {
+                String checkoutFileUid = checkoutTrackingFile.get(checkoutFileName);
+                String checkoutContent = Utils.readContentsAsString(join(GITLET_BLOB, checkoutFileUid));
+                Utils.writeContents(join(CWD, checkoutFileName), checkoutContent);
+            }
+            for (String currentTrackingFileName : currentTrackingFile.keySet()) {
+                if (!checkoutTrackingFile.containsKey(currentTrackingFileName)) {
+                    join(CWD, currentTrackingFileName).delete();
+                }
+            }
+            Utils.writeContents(CURRENT_BRANCH, branch);
+            Utils.writeContents(HEAD, commitUid);
+            clearStagingArea();
+            clearRemovalArea();
         }
+    }
+
+    //  If a working file is untracked in the current branch and would be overwritten by the checkout
+    private static boolean untrackedFileCheck(Map<String, String> checkoutTrackingFile,
+                                              Map<String, String> currentTrackingFile) {
+        Set<String> checkoutTrackingFileNames = checkoutTrackingFile.keySet();
+        for (String checkoutTrackingFileName : checkoutTrackingFileNames) {
+            if (join(CWD, checkoutTrackingFileName).exists() && !currentTrackingFile.containsKey(checkoutTrackingFileName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Creates a new branch with the given name, and points it at the current head commit.
+     * A branch is nothing more than a name for a reference (a SHA-1 identifier) to a commit node.
+     * This command does NOT immediately switch to the newly created branch (just as in real Git).
+     * Before you ever call branch, your code should be running with a default branch called “master”.
+     * @param branch
+     */
+    public static void createBranch(String branch) {
+        List<String> existingBranch = Utils.plainFilenamesIn(BRANCH);
+        if (existingBranch.contains(branch)) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+        Commit currentCommit = getCurrentCommit();
+        String currentCommitUid = currentCommit.getUID();
+        Utils.writeContents(join(BRANCH, branch), currentCommitUid);
     }
 }

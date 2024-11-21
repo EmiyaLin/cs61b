@@ -74,7 +74,8 @@ public class Main {
                 break;
             case "checkout":
                 if (args.length == 2) {
-
+                    String branchName = args[1];
+                    Repository.checkoutBranch(branchName);
                 } else if (args.length == 3 && args[1].equals("--")) {
                     filename = args[2];
                     Repository.checkout(filename);
@@ -82,6 +83,12 @@ public class Main {
                     String commitUid = args[1];
                     filename = args[3];
                     Repository.checkout(commitUid, filename);
+                }
+                break;
+            case "branch":
+                if (args.length == 2) {
+                    String branch = args[1];
+                    Repository.createBranch(branch);
                 }
         }
     }

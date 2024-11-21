@@ -43,6 +43,8 @@ public class Commit implements Serializable {
     // TODO: UID to be finished, may be use
     private String UID;
 
+    private String branch;
+
     /**
      *  create a commit that contains no files and has the commit message initial commit (just like that, with no
      *  punctuation). It will have a single branch: master, which initially points to this initial commit, and master
@@ -61,8 +63,7 @@ public class Commit implements Serializable {
         this.parent = null;
         this.UID = Utils.sha1(message, timestamp.toString());
         this.trackingFile = new HashMap<>();
-//        System.out.println(timestamp.toString());
-//        System.out.println(UID);
+        this.branch = "master";
     }
 
     /**
@@ -77,10 +78,11 @@ public class Commit implements Serializable {
      * @param stagingFilesList
      */
     public Commit(String message, Date timestamp, String parent, Map<String, String> trackingFile ,
-                  List<String> stagingFilesList, List<String> removalFilesList) {
+                  List<String> stagingFilesList, List<String> removalFilesList, String branch) {
         this.message = message;
         this.timestamp = timestamp;
         this.parent = parent;
+        this.branch = branch;
         for (String removalFile : removalFilesList) {
             trackingFile.remove(removalFile);
         }
@@ -101,9 +103,7 @@ public class Commit implements Serializable {
         this.UID = Utils.sha1(message, timestamp.toString(), parent, stagingFilesList.toString());
     }
 
-//    public void trackStagingFiles(List<String> stagingFilesList) {
-//
-//    }
+
 
     public String getUID() {
         return UID;
@@ -118,6 +118,9 @@ public class Commit implements Serializable {
     }
     public String getParent() {
         return parent;
+    }
+    public String getBranch() {
+        return branch;
     }
     public Map<String, String> getTrackingFile() {
         return trackingFile;
