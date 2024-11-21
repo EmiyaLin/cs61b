@@ -77,7 +77,7 @@ public class Commit implements Serializable {
      * @param trackingFile
      * @param stagingFilesList
      */
-    public Commit(String message, Date timestamp, String parent, Map<String, String> trackingFile ,
+    public Commit(String message, Date timestamp, String parent, Map<String, String> trackingFile,
                   List<String> stagingFilesList, List<String> removalFilesList, String branch) {
         this.message = message;
         this.timestamp = timestamp;

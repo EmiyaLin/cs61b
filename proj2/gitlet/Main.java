@@ -90,6 +90,12 @@ public class Main {
                     String branch = args[1];
                     Repository.createBranch(branch);
                 }
+                break;
+            case "find":
+                if (args.length == 2) {
+                    String commitMessage = args[1];
+                    Repository.find(commitMessage);
+                }
         }
     }
 }

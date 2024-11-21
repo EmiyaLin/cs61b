@@ -242,6 +242,32 @@ public class Repository {
     }
 
     /**
+     * Description: Prints out the ids of all
+     * commits that have the given commit message,
+     * one per line. If there are multiple such commits,
+     * it prints the ids out on separate lines.
+     * The commit message is a single operand;
+     * to indicate a multiword message, put the operand in quotation marks,
+     * as for the commit command below. Hint: the hint for this command is the same as the one for global-log.
+     * @param message
+     */
+    public static void find(String message) {
+        List<String> commitUidList = Utils.plainFilenamesIn(GITLET_COMMIT);
+        boolean findFlag = false;
+        for (String commitUid : commitUidList) {
+            Commit commit = getCommit(commitUid);
+            String commitMessage = commit.getMessage();
+            if (commitMessage.equals(message)) {
+                findFlag = true;
+                System.out.println(commit.getUID());
+            }
+        }
+        if (!findFlag) {
+            System.out.println("Found no commit with that message.");
+        }
+    }
+
+    /**
      * Takes the version of the file as it exists in the head commit and puts it
      * in the working directory, overwriting the version of the file that’s already there if there is one.
      * The new version of the file is not staged.
