@@ -185,13 +185,18 @@ public class Repository {
      * it for removal
      * and remove the file from the working directory if the user has not already done so (do not remove it unless
      * it is tracked in the current commit).
-     *
+     * Failure cases: If the file is neither staged nor tracked by the head commit,
+     * print the error message No reason to remove the file.
      * @param filename
      */
     public static void rm(String filename) throws IOException {
         Commit currentCommit = getCurrentCommit();
         List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA));
         Map<String, String> trackingFiles = currentCommit.getTrackingFile();
+        if (!stagingFilesList.contains(filename) && !currentCommit.getTrackingFile().containsKey(filename)) {
+            System.out.println("No reason to remove the file.");
+            System.exit(0);
+        }
         if (stagingFilesList.contains(filename)) {
             join(GITLET_STAGINGAREA, filename).delete();
         }
@@ -301,6 +306,9 @@ public class Repository {
         if (join(GITLET_STAGINGAREA, filename).isFile()) {
             join(GITLET_STAGINGAREA, filename).delete();
         }
+        if (join(GITLET_REMOVALAREA, filename).isFile()) {
+            join(GITLET_REMOVALAREA, filename).delete();
+        }
     }
 
     /**
@@ -314,6 +322,7 @@ public class Repository {
     public static void checkoutBranch(String branch) {
         List<String> branches = Utils.plainFilenamesIn(BRANCH);
         String commitUid = Utils.readContentsAsString(join(BRANCH, branch));
+        Utils.writeContents(HEAD, commitUid);
         Commit commit = getCommit(commitUid);
         Map<String, String> checkoutTrackingFile = commit.getTrackingFile();
         Set<String> checkoutFileNames = checkoutTrackingFile.keySet();
