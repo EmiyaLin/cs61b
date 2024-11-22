@@ -96,6 +96,9 @@ public class Main {
                     String commitMessage = args[1];
                     Repository.find(commitMessage);
                 }
+                break;
+            case "status":
+                Repository.showStatus();
         }
     }
 }

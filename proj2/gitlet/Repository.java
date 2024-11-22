@@ -375,4 +375,138 @@ public class Repository {
         String currentCommitUid = currentCommit.getUID();
         Utils.writeContents(join(BRANCH, branch), currentCommitUid);
     }
+
+    /**
+     *  Displays what branches currently exist,
+     *  and marks the current branch with a *.
+     *  Also displays what files have been staged for addition or removal.
+     *  An example of the exact format it should follow is as follows.
+     * <p>
+     *  === Branches ===
+     * *master
+     * other-branch
+     * <p>
+     * === Staged Files ===
+     * wug.txt
+     * wug2.txt
+     * <p>
+     * === Removed Files ===
+     * goodbye.txt
+     * <p>
+     * === Modifications Not Staged For Commit ===
+     * junk.txt (deleted)
+     * wug3.txt (modified)
+     * <p>
+     * === Untracked Files ===
+     * random.stuff
+     */
+    public static void showStatus() {
+        Commit currentCommit = getCurrentCommit();
+        String currentBranch = Utils.readContentsAsString(CURRENT_BRANCH);
+        List<String> branchList = Utils.plainFilenamesIn(BRANCH);
+        branchList.sort(String::compareTo);
+        System.out.println("=== Branches ===");
+        for (String branch : branchList) {
+            if (!branch.equals(currentBranch)) {
+                System.out.println(branch);
+            } else {
+                System.out.println("*" + branch);
+            }
+        }
+        System.out.println();
+        List<String> stagingFileList = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
+        stagingFileList.sort(String::compareTo);
+        System.out.println("=== Staged Files ===");
+        for (String stagedFile : stagingFileList) {
+            System.out.println(stagedFile);
+        }
+        System.out.println();
+        List<String> removedFileList = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
+        removedFileList.sort(String::compareTo);
+        System.out.println("=== Removed Files ===");
+        for (String removedFile : removedFileList) {
+            System.out.println(removedFile);
+        }
+        System.out.println();
+        //  A file in the working directory is “modified but not staged” if it is
+        //
+        //  Tracked in the current commit, changed in the working directory, but not staged; or
+        //  Staged for addition, but with different contents than in the working directory; or
+        //  Staged for addition, but deleted in the working directory; or
+        //  Not staged for removal, but tracked in the current commit and deleted from the working directory.
+        List<String> lexicographicPrintList = new ArrayList<>();
+        Map<String, String> currentCommitTrackedFile = currentCommit.getTrackingFile();
+        List<String> currentCommitTrakcedFileNameList = new ArrayList<>(currentCommitTrackedFile.keySet());
+        currentCommitTrakcedFileNameList.sort(String::compareTo);
+        for (String currentCommitTrackedFileName : currentCommitTrakcedFileNameList) {
+            String currentCommitTrackedFileUid = currentCommitTrackedFile.get(currentCommitTrackedFileName);
+            List<String> fileInCWD = Utils.plainFilenamesIn(CWD);
+            if (statusCheck1(currentCommitTrackedFileUid, currentCommitTrackedFileName, fileInCWD, stagingFileList)) {
+                lexicographicPrintList.add(currentCommitTrackedFileName + " (modified)");
+            } else if (statusCheck4(currentCommitTrackedFileName, removedFileList)) {
+                lexicographicPrintList.add(currentCommitTrackedFileName + " (deleted)");
+            }
+        }
+        for (String stagedFileName : stagingFileList) {
+            if (!statusCheck2(stagedFileName, Utils.plainFilenamesIn(CWD))) {
+                lexicographicPrintList.add(stagedFileName + " (modified)");
+            } else if (statusCheck3(stagedFileName, Utils.plainFilenamesIn(CWD))) {
+                lexicographicPrintList.add(stagedFileName + " (deleted)");
+            }
+        }
+        lexicographicPrintList.sort(String::compareTo);
+        System.out.println("=== Modifications Not Staged For Commit ===");
+        for (String str : lexicographicPrintList) {
+            System.out.println(str);
+        }
+        System.out.println();
+        // The final category (“Untracked Files”) is for files present in the working directory
+        // but neither staged for addition nor tracked.
+        // This includes files that have been staged for removal, but then re-created without Gitlet’s knowledge.
+        // Ignore any subdirectories that may have been introduced, since Gitlet does not deal with them.
+        List<String> workingDirectory = Utils.plainFilenamesIn(CWD);
+        System.out.println("=== Untracked Files ===");
+        for (String fileNameInWorkingDirectory : workingDirectory) {
+            if (!stagingFileList.contains(fileNameInWorkingDirectory) &&
+                    !currentCommitTrackedFile.containsKey(fileNameInWorkingDirectory)) {
+                System.out.println(fileNameInWorkingDirectory);
+            }
+        }
+    }
+
+    // Tracked in the current commit, changed in the working directory, but not staged;
+    private static boolean statusCheck1(String currentCommitTrackedFileUid, String currentCommitTrackedFileName,
+                                        List<String> fileInCWD, List<String> stagingFielList) {
+        if (fileInCWD.contains(currentCommitTrackedFileName)) {
+            File CWDFile = join(CWD, currentCommitTrackedFileName);
+            String CWDFileUid =  sha1(Utils.readContentsAsString(CWDFile));
+            if (!CWDFileUid.equals(currentCommitTrackedFileUid)) {
+                if (!stagingFielList.contains(currentCommitTrackedFileName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    // Staged for addition, but with different contents than in the working directory;
+    private static boolean statusCheck2(String stagedFileName, List<String> fileInCWD) {
+        if (!fileInCWD.contains(stagedFileName)) {
+            return false;
+        }
+        String stagedFileUid = sha1(Utils.readContentsAsString(join(GITLET_STAGINGAREA, stagedFileName)));
+        String fileInCWDUid = sha1(Utils.readContentsAsString(join(CWD, stagedFileName)));
+        return stagedFileUid.equals(fileInCWDUid);
+    }
+
+    // Staged for addition, but deleted in the working directory;
+    private static boolean statusCheck3(String stagedFileName, List<String> fileInCWD) {
+       return !fileInCWD.contains(stagedFileName);
+    }
+
+    // Not staged for removal, but tracked in the current commit and deleted from the working directory
+    private static boolean statusCheck4(String currentCommitTrackedFileName, List<String> removedFileList) {
+        return !removedFileList.contains(currentCommitTrackedFileName) &&
+                !join(CWD, currentCommitTrackedFileName).exists();
+    }
 }
