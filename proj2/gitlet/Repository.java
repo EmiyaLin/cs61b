@@ -83,12 +83,16 @@ public class Repository {
     }
 
     /**
-     * Description: Adds a copy of the file as it currently exists to the staging area (see the description of the commit command).
+     * Description: Adds a copy of the file as it currently exists to the staging area
+     * (see the description of the commit command).
      * For this reason, adding a file is also called staging the file for addition.
+     *
      * Staging an already-staged file overwrites the previous entry in the staging area with the new contents.
      * The staging area should be somewhere in .gitlet.
-     * If the current working version of the file is identical to the version in the current commit, do not stage it to be added,
-     * and remove it from the staging area if it is already there (as can happen when a file is changed, added, and then changed back to it’s original version).
+     * If the current working version of the file is identical to the version in the current commit, do not stage
+     * it to be added,
+     * and remove it from the staging area if it is already there
+     * (as can happen when a file is changed, added, and then changed back to it’s original version).
      * The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
      */
     /**
@@ -102,6 +106,10 @@ public class Repository {
         String uid = Utils.sha1(fileContent);
         File stagingFile = Utils.join(GITLET_STAGINGAREA, filename);
         List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA)); // 暂存区
+        List<String> removalFileList = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
+        if (removalFileList.contains(filename)) {
+            join(GITLET_REMOVALAREA, filename).delete();
+        }
         Commit currentCommit = getCurrentCommit();
         if (currentCommit.getTrackingFile().containsKey(filename)) { // 要stage的文件被跟踪
             if (checkIdentical(uid, filename)) {  // 判断内容和blob相同
@@ -110,15 +118,17 @@ public class Repository {
                     stagingFilesList.remove(filename);
                 }
                 return;
+            } else {
+                Utils.writeContents(join(GITLET_STAGINGAREA, filename), fileContent);
+            }
+        } else {
+            if (!stagingFilesList.contains(filename)) {
+                stagingFile.createNewFile();
+                Utils.writeContents(stagingFile, fileContent);
+            } else {
+                Utils.writeContents(stagingFile, fileContent);
             }
         }
-        if (!stagingFilesList.contains(filename)) {
-            stagingFile.createNewFile();
-            Utils.writeContents(stagingFile, fileContent);
-        } else {
-            Utils.writeContents(stagingFile, fileContent);
-        }
-        String content = Utils.readContentsAsString(stagingFile);
     }
 
     /**
@@ -141,13 +151,22 @@ public class Repository {
      * creating a new commit. The commit is said to be tracking the saved files.
      * By default, each commit’s snapshot of files will be exactly the same as its parent commit’s snapshot of files;
      * it will keep versions of files exactly as they are, and not update them.
-     * A commit will only update the contents of files it is tracking that have been staged for addition at the time of commit,
-     * in which case the commit will now include the version of the file that was staged instead of the version it got from its parent.
+     * A commit will only update the contents of files it is
+     * tracking that have been staged for addition at the time of commit,
+     * in which case the commit will now include the version of the file
+     * that was staged instead of the version it got from its parent.
      * A commit will save and start tracking any files that were staged for addition but weren’t tracked by its parent.
-     * Finally, files tracked in the current commit may be untracked in the new commit as a result being staged for removal by the rm command (below).
+     * Finally, files tracked in the current commit may be untracked in the new commit
+     * as a result being staged for removal by the rm command (below).
      */
     public static void commit(String message) throws IOException {
         String currentBranch = Utils.readContentsAsString(join(GITLET_DIR, "current_branch"));
+        List<String> stagingArea = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
+        List<String> removalArea = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
+        if (stagingArea.isEmpty() && removalArea.isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
         Commit normalCommit = new Commit(message, new Date(), getCurrentCommit().getUID(),
                 getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA),
                 plainFilenamesIn(GITLET_REMOVALAREA), currentBranch);
@@ -155,7 +174,9 @@ public class Repository {
         commitFile.createNewFile();
         Utils.writeObject(commitFile, normalCommit);
         Utils.writeContents(HEAD, normalCommit.getUID());
-        Utils.writeContents(MASTER, normalCommit.getUID());
+        System.out.println(currentBranch);
+        File branch = join(BRANCH, currentBranch);
+        Utils.writeContents(branch, normalCommit.getUID());
         clearStagingArea();
         clearRemovalArea();
     }
@@ -291,6 +312,10 @@ public class Repository {
      * @param filename
      */
     public static void checkout(String commitUid, String filename) {
+        if (!join(GITLET_COMMIT, commitUid).exists()) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
         Commit commit = getCommit(commitUid);
         checkoutFile(filename, commit);
     }
@@ -321,13 +346,17 @@ public class Repository {
      */
     public static void checkoutBranch(String branch) {
         List<String> branches = Utils.plainFilenamesIn(BRANCH);
+        if (!join(BRANCH, branch).exists()) {
+            System.out.println("No such branch exists.");
+            System.exit(0);
+        }
+        Commit currentCommit = getCurrentCommit();
         String commitUid = Utils.readContentsAsString(join(BRANCH, branch));
-        Utils.writeContents(HEAD, commitUid);
         Commit commit = getCommit(commitUid);
         Map<String, String> checkoutTrackingFile = commit.getTrackingFile();
         Set<String> checkoutFileNames = checkoutTrackingFile.keySet();
-        Commit currentCommit = getCurrentCommit();
         Map<String, String> currentTrackingFile = currentCommit.getTrackingFile();
+        Set<String> currentTrackingFileNames = currentTrackingFile.keySet();
         if (!branches.contains(branch)) {
             System.out.println("No such branch exists");
             System.exit(0);

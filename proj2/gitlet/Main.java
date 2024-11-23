@@ -48,7 +48,7 @@ public class Main {
                 break;
             // TODO: FILL THE REST IN
             case "commit":
-                if (args.length < 2) {
+                if (args.length < 2 && args[1] != null) {
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
                 }
@@ -83,6 +83,9 @@ public class Main {
                     String commitUid = args[1];
                     filename = args[3];
                     Repository.checkout(commitUid, filename);
+                } else {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
                 }
                 break;
             case "branch":
