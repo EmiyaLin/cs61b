@@ -48,7 +48,7 @@ public class Main {
                 break;
             // TODO: FILL THE REST IN
             case "commit":
-                if (args.length < 2 || args[1] == null) {
+                if (args.length < 2 || args[1].length() == 0) {
                     System.out.println("Please enter a commit message.");
                     System.exit(0);
                 }
