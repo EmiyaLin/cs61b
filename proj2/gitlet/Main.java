@@ -20,6 +20,12 @@ public class Main {
             System.exit(0);
         }
         String firstArg = args[0];
+        if (!firstArg.equals("init")) {
+            if (!Repository.GITLET_DIR.isDirectory()) {
+                System.out.println("Not in an initialized Gitlet directory.");
+                System.exit(0);
+            }
+        }
         switch(firstArg) {
             case "init":
                 // TODO: handle the `init` command
@@ -102,6 +108,16 @@ public class Main {
                 break;
             case "status":
                 Repository.showStatus();
+                break;
+            case "rm-branch":
+                if (args.length < 2 || args[1].length() == 0) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.rmBranch(args[1]);
+            default:
+                System.out.println("No command with that name exists.");
+                System.exit(0);
         }
     }
 }

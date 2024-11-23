@@ -545,4 +545,54 @@ public class Repository {
         return !removedFileList.contains(currentCommitTrackedFileName) &&
                 !join(CWD, currentCommitTrackedFileName).exists();
     }
+
+    /**
+     * Description: Deletes the branch with the given name.
+     * This only means to delete the pointer associated with the branch;
+     * it does not mean to delete all commits that were created under the branch, or anything like that.
+     *
+     * Failure cases: If a branch with the given name does not exist, aborts.
+     * Print the error message A branch with that name does not exist.
+     * If you try to remove the branch you’re currently on, aborts,
+     * printing the error message Cannot remove the current branch.
+     * @param branchName
+     */
+    public static void rmBranch(String branchName) {
+        if (!join(BRANCH, branchName).exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String currentBranchName = Utils.readContentsAsString(CURRENT_BRANCH);
+        if (currentBranchName.equals(branchName)) {
+            System.out.println("Cannot remove the current branch.");
+            System.exit(0);
+        }
+        join(BRANCH, branchName).delete();
+    }
+
+    /**
+     * Description: Checks out all the files tracked by the given commit.
+     * Removes tracked files that are not present in that commit.
+     * Also moves the current branch’s head to that commit node.
+     * See the intro for an example of what happens to the head pointer after using reset.
+     * The [commit id] may be abbreviated as for checkout.
+     * The staging area is cleared.
+     * The command is essentially checkout of an arbitrary commit that also changes the current branch head.
+     * @param commitUid
+     */
+    public static void reset(String commitUid) {
+        Commit resetCommit = getCommit(commitUid);
+        Commit currentCommit = getCurrentCommit();
+        Set<String> resetCommitTrackedFileList = resetCommit.getTrackingFile().keySet();
+        Set<String> currentCommitTrackedFileList = currentCommit.getTrackingFile().keySet();
+        for (String currentCommitTrackedFile : currentCommitTrackedFileList) {
+            if (!resetCommitTrackedFileList.contains(currentCommitTrackedFile)) {
+                join(CWD, currentCommitTrackedFile).delete();
+            }
+        }
+        for (String resetCommitTrackedFile : resetCommitTrackedFileList) {
+            checkout(commitUid, resetCommitTrackedFile);
+        }
+        clearStagingArea();
+    }
 }
