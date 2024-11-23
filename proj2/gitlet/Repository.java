@@ -79,7 +79,6 @@ public class Repository {
         File commit = Utils.join(GITLET_COMMIT, initialCommit.getUID());
         commit.createNewFile();
         Utils.writeObject(commit, initialCommit);
-//        System.out.println(readObject(commit, Commit.class).toString());
     }
 
     /**
@@ -174,7 +173,6 @@ public class Repository {
         commitFile.createNewFile();
         Utils.writeObject(commitFile, normalCommit);
         Utils.writeContents(HEAD, normalCommit.getUID());
-        System.out.println(currentBranch);
         File branch = join(BRANCH, currentBranch);
         Utils.writeContents(branch, normalCommit.getUID());
         clearStagingArea();
