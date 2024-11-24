@@ -245,7 +245,7 @@ public class Repository {
     }
 
     private static void showCommitInfo(Commit currentCommit) {
-        Formatter fomatter = new Formatter();
+        Formatter fomatter = new Formatter(Locale.ENGLISH);
         System.out.println("===");
         System.out.println("commit " + currentCommit.getUID());
         fomatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", currentCommit.getTimestamp());
@@ -558,7 +558,7 @@ public class Repository {
      * @param branchName
      */
     public static void rmBranch(String branchName) {
-        if (!join(BRANCH, branchName).exists()) {
+        if (branchName.equals("") || !join(BRANCH, branchName).exists()) {
             System.out.println("A branch with that name does not exist.");
             System.exit(0);
         }
@@ -581,6 +581,10 @@ public class Repository {
      * @param commitUid
      */
     public static void reset(String commitUid) {
+        if (commitUid.equals("") || !join(GITLET_COMMIT, commitUid).exists()) {
+            System.out.println("No commit with that id exists.");
+            System.exit(0);
+        }
         Commit resetCommit = getCommit(commitUid);
         Commit currentCommit = getCurrentCommit();
         Set<String> resetCommitTrackedFileList = resetCommit.getTrackingFile().keySet();
