@@ -310,12 +310,35 @@ public class Repository {
      * @param filename
      */
     public static void checkout(String commitUid, String filename) {
+        if (shortUidCheck(commitUid)) {
+            commitUid = getFullUid(commitUid);
+        }
         if (!join(GITLET_COMMIT, commitUid).exists()) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
         Commit commit = getCommit(commitUid);
         checkoutFile(filename, commit);
+    }
+
+    private static boolean shortUidCheck(String shortCommitUid) {
+        List<String> commitUidList = Utils.plainFilenamesIn(GITLET_COMMIT);
+        for (String commitUid : commitUidList) {
+            if (commitUid.contains(shortCommitUid)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String getFullUid(String shortCommitUid) {
+        List<String> commitUidList = Utils.plainFilenamesIn(GITLET_COMMIT);
+        for (String commitUid : commitUidList) {
+            if (commitUid.contains(shortCommitUid)) {
+                return commitUid;
+            }
+        }
+        return null;
     }
 
     private static void checkoutFile(String filename, Commit commit) {
