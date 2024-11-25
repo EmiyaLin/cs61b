@@ -365,7 +365,7 @@ public class Repository {
      * The staging area is cleared, unless the checked-out branch is the current branch (see Failure cases below).
      * @param branch
      */
-    public static void checkoutBranch(String branch) {
+    public static void checkoutBranch(String branch, boolean check) {
         List<String> branches = Utils.plainFilenamesIn(BRANCH);
         if (!join(BRANCH, branch).exists()) {
             System.out.println("No such branch exists.");
@@ -381,7 +381,7 @@ public class Repository {
         if (!branches.contains(branch)) {
             System.out.println("No such branch exists");
             System.exit(0);
-        } else if (branch.equals(Utils.readContentsAsString(CURRENT_BRANCH))) {
+        } else if (branch.equals(Utils.readContentsAsString(CURRENT_BRANCH)) && check) {
             System.out.println("No need to checkout the current branch.");
             System.exit(0);
         }  else if (untrackedFileCheck(checkoutTrackingFile, currentTrackingFile)) {
@@ -393,7 +393,7 @@ public class Repository {
                 String checkoutContent = Utils.readContentsAsString(join(GITLET_BLOB, checkoutFileUid));
                 Utils.writeContents(join(CWD, checkoutFileName), checkoutContent);
             }
-            for (String currentTrackingFileName : currentTrackingFile.keySet()) {
+            for (String currentTrackingFileName : currentTrackingFileNames) {
                 if (!checkoutTrackingFile.containsKey(currentTrackingFileName)) {
                     join(CWD, currentTrackingFileName).delete();
                 }
@@ -604,22 +604,16 @@ public class Repository {
      * @param commitUid
      */
     public static void reset(String commitUid) {
+        if (shortUidCheck(commitUid)) {
+            commitUid = getFullUid(commitUid);
+        }
         if (commitUid.equals("") || !join(GITLET_COMMIT, commitUid).exists()) {
             System.out.println("No commit with that id exists.");
             System.exit(0);
         }
-        Commit resetCommit = getCommit(commitUid);
-        Commit currentCommit = getCurrentCommit();
-        Set<String> resetCommitTrackedFileList = resetCommit.getTrackingFile().keySet();
-        Set<String> currentCommitTrackedFileList = currentCommit.getTrackingFile().keySet();
-        for (String currentCommitTrackedFile : currentCommitTrackedFileList) {
-            if (!resetCommitTrackedFileList.contains(currentCommitTrackedFile)) {
-                join(CWD, currentCommitTrackedFile).delete();
-            }
-        }
-        for (String resetCommitTrackedFile : resetCommitTrackedFileList) {
-            checkout(commitUid, resetCommitTrackedFile);
-        }
-        clearStagingArea();
+        Commit targetCommit = getCommit(commitUid);
+        String currentBranchName = Utils.readContentsAsString(CURRENT_BRANCH);
+        Utils.writeContents(join(BRANCH, currentBranchName), targetCommit.getUID());
+        checkoutBranch(currentBranchName, false);
     }
 }

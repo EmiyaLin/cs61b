@@ -81,7 +81,7 @@ public class Main {
             case "checkout":
                 if (args.length == 2) {
                     String branchName = args[1];
-                    Repository.checkoutBranch(branchName);
+                    Repository.checkoutBranch(branchName, true);
                 } else if (args.length == 3 && args[1].equals("--")) {
                     filename = args[2];
                     Repository.checkout(filename);
