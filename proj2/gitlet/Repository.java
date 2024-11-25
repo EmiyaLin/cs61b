@@ -213,7 +213,7 @@ public class Repository {
         for (String filename : removalFiles) {
             join(GITLET_REMOVALAREA, filename).delete();
         }
-   }
+    }
 
     /**
      * Unstage the file if it is currently staged for addition.
@@ -582,7 +582,7 @@ public class Repository {
 
     // Staged for addition, but deleted in the working directory;
     private static boolean statusCheck3(String stagedFileName, List<String> fileInCWD) {
-       return !fileInCWD.contains(stagedFileName);
+        return !fileInCWD.contains(stagedFileName);
     }
 
     // Not staged for removal, but tracked in the current commit
