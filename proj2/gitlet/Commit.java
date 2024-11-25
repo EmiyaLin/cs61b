@@ -98,7 +98,8 @@ public class Commit implements Serializable {
                 trackingFile.put(filename, stagingFileUid);
             }
             Utils.writeContents(Utils.join(Repository.GITLET_BLOB, stagingFileUid),
-                    Utils.readContentsAsString(Utils.join(Repository.GITLET_STAGINGAREA, filename)));
+                    Utils.readContentsAsString(Utils.join(Repository.GITLET_STAGINGAREA,
+                            filename)));
         }
         this.trackingFile = trackingFile;
         this.UID = Utils.sha1(message, timestamp.toString(), parent, trackingFile.toString());

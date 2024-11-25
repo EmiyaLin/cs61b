@@ -101,7 +101,8 @@ public class Repository {
      * and remove it from the staging area if it is already there
      * (as can happen when a file is changed, added, and then
      * changed back to it’s original version).
-     * The file will no longer be staged for removal (see gitlet rm), if it was at the time of the command.
+     * The file will no longer be staged for removal (see gitlet rm), if it was at the
+     * time of the command.
      */
     /**
      * 要把stagingFile 存入 缓存区
@@ -114,7 +115,7 @@ public class Repository {
         String fileContent = Utils.readContentsAsString(join(CWD, filename));
         String uid = Utils.sha1(fileContent);
         File stagingFile = Utils.join(GITLET_STAGINGAREA, filename);
-        List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA)); // 暂存区
+        List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA));
         List<String> removalFileList = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
         if (removalFileList.contains(filename)) {
             join(GITLET_REMOVALAREA, filename).delete();
@@ -173,7 +174,8 @@ public class Repository {
      * as a result being staged for removal by the rm command (below).
      */
     public static void commit(String message) throws IOException {
-        String currentBranch = Utils.readContentsAsString(join(GITLET_DIR, "current_branch"));
+        String currentBranch = Utils.readContentsAsString(join(GITLET_DIR,
+                "current_branch"));
         List<String> stagingArea = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
         List<String> removalArea = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
         if (stagingArea.isEmpty() && removalArea.isEmpty()) {
@@ -228,7 +230,9 @@ public class Repository {
         Commit currentCommit = getCurrentCommit();
         List<String> stagingFilesList = new ArrayList<>(Utils.plainFilenamesIn(GITLET_STAGINGAREA));
         Map<String, String> trackingFiles = currentCommit.getTrackingFile();
-        if (!stagingFilesList.contains(filename) && !currentCommit.getTrackingFile().containsKey(filename)) {
+        if (!stagingFilesList.contains(filename)
+                &&
+                !currentCommit.getTrackingFile().containsKey(filename)) {
             System.out.println("No reason to remove the file.");
             System.exit(0);
         }
@@ -237,7 +241,8 @@ public class Repository {
         }
         if (currentCommit.getTrackingFile().containsKey(filename)) {
             join(GITLET_REMOVALAREA, filename).createNewFile();
-            Utils.writeContents(join(GITLET_REMOVALAREA, filename), currentCommit.getTrackingFile().get(filename));
+            Utils.writeContents(join(GITLET_REMOVALAREA, filename),
+                    currentCommit.getTrackingFile().get(filename));
             if (join(CWD, filename).exists()) {
                 Utils.restrictedDelete(join(CWD, filename));
             }
@@ -413,12 +418,14 @@ public class Repository {
             System.out.println("No need to checkout the current branch.");
             System.exit(0);
         }  else if (untrackedFileCheck(checkoutTrackingFile, currentTrackingFile)) {
-            System.out.println("There is an untracked file in the way; delete it, or add and commit it first.");
+            System.out.println("There is an untracked file in the way; " +
+                    "delete it, or add and commit it first.");
             System.exit(0);
         } else {
             for (String checkoutFileName : checkoutFileNames) {
                 String checkoutFileUid = checkoutTrackingFile.get(checkoutFileName);
-                String checkoutContent = Utils.readContentsAsString(join(GITLET_BLOB, checkoutFileUid));
+                String checkoutContent = Utils.readContentsAsString(join(GITLET_BLOB,
+                        checkoutFileUid));
                 Utils.writeContents(join(CWD, checkoutFileName), checkoutContent);
             }
             for (String currentTrackingFileName : currentTrackingFileNames) {
@@ -439,7 +446,8 @@ public class Repository {
                                               Map<String, String> currentTrackingFile) {
         Set<String> checkoutTrackingFileNames = checkoutTrackingFile.keySet();
         for (String checkoutTrackingFileName : checkoutTrackingFileNames) {
-            if (join(CWD, checkoutTrackingFileName).exists() && !currentTrackingFile.containsKey(checkoutTrackingFileName)) {
+            if (join(CWD, checkoutTrackingFileName).exists() && !currentTrackingFile.
+                    containsKey(checkoutTrackingFileName)) {
                 return true;
             }
         }
@@ -531,10 +539,12 @@ public class Repository {
         //  commit and deleted from the working directory.
         List<String> lexicographicPrintList = new ArrayList<>();
         Map<String, String> currentCommitTrackedFile = currentCommit.getTrackingFile();
-        List<String> currentCommitTrakcedFileNameList = new ArrayList<>(currentCommitTrackedFile.keySet());
+        List<String> currentCommitTrakcedFileNameList =
+                new ArrayList<>(currentCommitTrackedFile.keySet());
         currentCommitTrakcedFileNameList.sort(String::compareTo);
         for (String currentCommitTrackedFileName : currentCommitTrakcedFileNameList) {
-            String currentCommitTrackedFileUid = currentCommitTrackedFile.get(currentCommitTrackedFileName);
+            String currentCommitTrackedFileUid =
+                    currentCommitTrackedFile.get(currentCommitTrackedFileName);
             List<String> fileInCWD = Utils.plainFilenamesIn(CWD);
             if (statusCheck1(currentCommitTrackedFileUid, currentCommitTrackedFileName,
                     fileInCWD, stagingFileList)) {
@@ -566,7 +576,8 @@ public class Repository {
         List<String> workingDirectory = Utils.plainFilenamesIn(CWD);
         System.out.println("=== Untracked Files ===");
         for (String fileNameInWorkingDirectory : workingDirectory) {
-            if (!stagingFileList.contains(fileNameInWorkingDirectory) &&
+            if (!stagingFileList.contains(fileNameInWorkingDirectory)
+                    &&
                     !currentCommitTrackedFile.containsKey(fileNameInWorkingDirectory)) {
                 System.out.println(fileNameInWorkingDirectory);
             }
@@ -575,7 +586,8 @@ public class Repository {
 
     // Tracked in the current commit, changed
     // in the working directory, but not staged;
-    private static boolean statusCheck1(String currentCommitTrackedFileUid, String currentCommitTrackedFileName,
+    private static boolean statusCheck1(String currentCommitTrackedFileUid,
+                                        String currentCommitTrackedFileName,
                                         List<String> fileInCWD, List<String> stagingFielList) {
         if (fileInCWD.contains(currentCommitTrackedFileName)) {
             File CWDFile = join(CWD, currentCommitTrackedFileName);
@@ -595,7 +607,8 @@ public class Repository {
         if (!fileInCWD.contains(stagedFileName)) {
             return false;
         }
-        String stagedFileUid = sha1(Utils.readContentsAsString(join(GITLET_STAGINGAREA, stagedFileName)));
+        String stagedFileUid = sha1(Utils.readContentsAsString(join(GITLET_STAGINGAREA,
+                stagedFileName)));
         String fileInCWDUid = sha1(Utils.readContentsAsString(join(CWD, stagedFileName)));
         return stagedFileUid.equals(fileInCWDUid);
     }
@@ -607,8 +620,10 @@ public class Repository {
 
     // Not staged for removal, but tracked in the current commit
     // and deleted from the working directory
-    private static boolean statusCheck4(String currentCommitTrackedFileName, List<String> removedFileList) {
-        return !removedFileList.contains(currentCommitTrackedFileName) &&
+    private static boolean statusCheck4(String currentCommitTrackedFileName, List<String>
+            removedFileList) {
+        return !removedFileList.contains(currentCommitTrackedFileName)
+                &&
                 !join(CWD, currentCommitTrackedFileName).exists();
     }
 
