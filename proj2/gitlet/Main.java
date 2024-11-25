@@ -6,7 +6,7 @@ import java.util.List;
 import static gitlet.Utils.join;
 
 /** Driver class for Gitlet, a subset of the Git version-control system.
- *  @author TODO
+ *  @author Xinran Zhao
  */
 public class Main {
 
@@ -14,7 +14,6 @@ public class Main {
      *  <COMMAND> <OPERAND1> <OPERAND2> ... 
      */
     public static void main(String[] args) {
-        // TODO: what if args is empty?
         if (args.length == 0) {
             System.out.println("Please enter a command");
             System.exit(0);
@@ -28,7 +27,6 @@ public class Main {
         }
         switch(firstArg) {
             case "init":
-                // TODO: handle the `init` command
                 if (Repository.GITLET_DIR.isDirectory()) {
                     System.out.println("A Gitlet version-control system already exists in the current directory.");
                     System.exit(0);
@@ -40,7 +38,6 @@ public class Main {
                 }
                 break;
             case "add":
-                // TODO: handle the `add [filename]` command
                 if (args[1] == null || !join(Repository.CWD, args[1]).isFile()) {
                     System.out.println("File does not exist.");
                     System.exit(0);
@@ -52,7 +49,6 @@ public class Main {
                     throw new RuntimeException(e);
                 }
                 break;
-            // TODO: FILL THE REST IN
             case "commit":
                 if (args.length < 2 || args[1].length() == 0) {
                     System.out.println("Please enter a commit message.");
