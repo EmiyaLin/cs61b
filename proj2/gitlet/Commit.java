@@ -31,6 +31,8 @@ public class Commit implements Serializable {
     // The pointer points to the parent commit.
     private String parent;
 
+    private String secondParent;
+
     // file 存 Commit相关的Blob（uid) <Hello.txt, uid>
     private Map<String, String> trackingFile;
 
@@ -60,6 +62,7 @@ public class Commit implements Serializable {
         this.message = "initial commit";
         this.timestamp = new Date(0);
         this.parent = null;
+        this.secondParent = null;
         this.UID = Utils.sha1(message, timestamp.toString());
         this.trackingFile = new HashMap<>();
         this.branch = "master";
@@ -84,6 +87,36 @@ public class Commit implements Serializable {
         this.timestamp = timestamp;
         this.parent = parent;
         this.branch = branch;
+        this.secondParent = null;
+        for (String removalFile : removalFilesList) {
+            trackingFile.remove(removalFile);
+        }
+        for (String filename : stagingFilesList) {
+            File stagingFile = Utils.join(Repository.GITLET_STAGINGAREA, filename);
+            String stagingFileUid = Utils.sha1(Utils.readContentsAsString(stagingFile));
+            // 没有跟踪
+            if (!trackingFile.containsKey(filename)) {
+                trackingFile.put(filename, stagingFileUid);
+            } else {
+                trackingFile.remove(filename);
+                trackingFile.put(filename, stagingFileUid);
+            }
+            Utils.writeContents(Utils.join(Repository.GITLET_BLOB, stagingFileUid),
+                    Utils.readContentsAsString(Utils.join(Repository.GITLET_STAGINGAREA,
+                            filename)));
+        }
+        this.trackingFile = trackingFile;
+        this.UID = Utils.sha1(message, timestamp.toString(), parent, trackingFile.toString());
+    }
+
+    public Commit(String message, Date timestamp, String parent, Map<String, String> trackingFile,
+                  List<String> stagingFilesList, List<String> removalFilesList, String branch,
+                  String secondParentUid) {
+        this.message = message;
+        this.timestamp = timestamp;
+        this.parent = parent;
+        this.branch = branch;
+        this.secondParent = secondParentUid;
         for (String removalFile : removalFilesList) {
             trackingFile.remove(removalFile);
         }
@@ -123,6 +156,9 @@ public class Commit implements Serializable {
     }
     public String getBranch() {
         return branch;
+    }
+    public String getSecondParent() {
+        return secondParent;
     }
     public Map<String, String> getTrackingFile() {
         return trackingFile;

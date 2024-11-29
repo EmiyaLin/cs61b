@@ -262,17 +262,29 @@ public class Repository {
         Commit currentCommit = getCurrentCommit();
         String initialCommitUid = Utils.readContentsAsString(INITIALCOMMIT);
         while (!currentCommit.getUID().equals(initialCommitUid)) {
-            showCommitInfo(currentCommit);
+            if (currentCommit.getSecondParent() != null) {
+                showCommitInfo(currentCommit, true);
+            } else {
+                showCommitInfo(currentCommit, false);
+            }
             String parentUid = currentCommit.getParent();
             currentCommit = Utils.readObject(join(GITLET_COMMIT, parentUid), Commit.class);
         }
-        showCommitInfo(currentCommit);
+        if (currentCommit.getSecondParent() != null) {
+            showCommitInfo(currentCommit, true);
+        } else {
+            showCommitInfo(currentCommit, false);
+        }
     }
 
-    private static void showCommitInfo(Commit currentCommit) {
+    private static void showCommitInfo(Commit currentCommit, boolean mergeCheck) {
         Formatter fomatter = new Formatter(Locale.ENGLISH);
         System.out.println("===");
         System.out.println("commit " + currentCommit.getUID());
+        if (mergeCheck) {
+            System.out.println("Merge: " + currentCommit.getParent().substring(0, 8) + " " +
+                    currentCommit.getSecondParent().substring(0, 8));
+        }
         fomatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", currentCommit.getTimestamp());
         System.out.println("Date: " + fomatter);
         System.out.println(currentCommit.getMessage());
@@ -286,7 +298,12 @@ public class Repository {
     public static void globalLog() {
         List<String> commitUidList = Utils.plainFilenamesIn(GITLET_COMMIT);
         for (String commitUid : commitUidList) {
-            showCommitInfo(getCommit(commitUid));
+            Commit commit = getCommit(commitUid);
+            if (commit.getSecondParent() != null) {
+                showCommitInfo(commit, true);
+            } else {
+                showCommitInfo(commit, false);
+            }
         }
     }
 
@@ -671,10 +688,12 @@ public class Repository {
         Set<String> fileNames = new HashSet<>();
         fileNames.addAll(currentTrackingFiles.keySet());
         fileNames.addAll(branchTrackingFiles.keySet());
+        boolean hasConflict = false;
         for (String fileName : fileNames) {
             if (conflictCheck(fileName, currentTrackingFiles, splitPointTrackingFiles,
                     branchTrackingFiles)) {
                 inConflict(fileName, currentTrackingFiles, branchTrackingFiles);
+                hasConflict = true;
             } else if (branchTrackingFiles.containsKey(fileName)
                     &&
                     currentTrackingFiles.containsKey(fileName)
@@ -710,7 +729,37 @@ public class Repository {
                 }
             }
         }
+        if (!hasConflict) {
+            String currentCommitName = getCurrentCommit().getBranch();
+            try {
+                mergeCommit("Merged " + branchName + " into " + currentCommitName,
+                        branchNameCommitUid);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
+    private static void mergeCommit(String message, String branchNameCommitUid) throws IOException {
+        String currentBranch = Utils.readContentsAsString(join(GITLET_DIR,
+                "current_branch"));
+        List<String> stagingArea = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
+        List<String> removalArea = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
+        if (stagingArea.isEmpty() && removalArea.isEmpty()) {
+            System.out.println("No changes added to the commit.");
+            System.exit(0);
+        }
+        Commit normalCommit = new Commit(message, new Date(), getCurrentCommit().getUID(),
+                getCurrentCommit().getTrackingFile(), plainFilenamesIn(GITLET_STAGINGAREA),
+                plainFilenamesIn(GITLET_REMOVALAREA), currentBranch, branchNameCommitUid);
+        File commitFile = Utils.join(GITLET_COMMIT, normalCommit.getUID());
+        commitFile.createNewFile();
+        Utils.writeObject(commitFile, normalCommit);
+        Utils.writeContents(HEAD, normalCommit.getUID());
+        File branch = join(BRANCH, currentBranch);
+        Utils.writeContents(branch, normalCommit.getUID());
+        clearStagingArea();
+        clearRemovalArea();
     }
 
     private static boolean conflictCheck(String fileName,
