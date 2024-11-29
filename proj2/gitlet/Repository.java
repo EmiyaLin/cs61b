@@ -282,8 +282,11 @@ public class Repository {
         System.out.println("===");
         System.out.println("commit " + currentCommit.getUID());
         if (mergeCheck) {
-            System.out.println("Merge: " + currentCommit.getParent().substring(0, 8) + " " +
-                    currentCommit.getSecondParent().substring(0, 8));
+            System.out.println("Merge: " + currentCommit.getParent().substring(0, 7)
+                    +
+                    " "
+                    +
+                    currentCommit.getSecondParent().substring(0, 7));
         }
         fomatter.format("%1$ta %1$tb %1$td %1$tT %1$tY %1$tz", currentCommit.getTimestamp());
         System.out.println("Date: " + fomatter);
