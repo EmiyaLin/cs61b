@@ -644,4 +644,164 @@ public class Repository {
         Utils.writeContents(join(BRANCH, currentBranchName), targetCommit.getUID());
         checkoutBranch(currentBranchName, false);
     }
+
+    public static void merge(String branchName) {
+        if (branchName.equals("") || !join(BRANCH, branchName).exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        String currentCommitUid = getCurrentCommit().getUID();
+        String branchNameCommitUid = Utils.readContentsAsString(join(BRANCH, branchName));
+        Commit branchNameCommit = getCommit(branchNameCommitUid);
+        String splitPointUid = getSplitPointUid(branchNameCommit);
+        assert splitPointUid != null;
+        if (splitPointUid.equals(branchNameCommit.getUID())) {
+            System.out.println("Given branch is an ancestor of the current branch.");
+            System.exit(0);
+        }
+        if (splitPointUid.equals(currentCommitUid)) {
+            checkoutBranch(branchName, true);
+            System.out.println("Current branch fast-forwarded.");
+            System.exit(0);
+        }
+        Commit splitPoint = getCommit(splitPointUid);
+        Map<String, String> currentTrackingFiles = getCurrentCommit().getTrackingFile();
+        Map<String, String> branchTrackingFiles = branchNameCommit.getTrackingFile();
+        Map<String, String> splitPointTrackingFiles = splitPoint.getTrackingFile();
+        Set<String> fileNames = new HashSet<>();
+        fileNames.addAll(currentTrackingFiles.keySet());
+        fileNames.addAll(branchTrackingFiles.keySet());
+        for (String fileName : fileNames) {
+            if (conflictCheck(fileName, currentTrackingFiles, splitPointTrackingFiles,
+                    branchTrackingFiles)) {
+                inConflict(fileName, currentTrackingFiles, branchTrackingFiles);
+            } else if (branchTrackingFiles.containsKey(fileName)
+                    &&
+                    currentTrackingFiles.containsKey(fileName)
+                    &&
+                    splitPointTrackingFiles.containsKey(fileName)) {
+                String currentTrackingFileUid = currentTrackingFiles.get(fileName);
+                String branchTrackingFileUid = branchTrackingFiles.get(fileName);
+                String splitPointTrackingFileUid = splitPointTrackingFiles.get(fileName);
+                if (!splitPointTrackingFileUid.equals(branchTrackingFileUid)
+                        &&
+                        splitPointTrackingFileUid.equals(currentTrackingFileUid)) {
+                    checkout(branchNameCommitUid, fileName);
+                }
+            } else if (!splitPointTrackingFiles.containsKey(fileName)
+                    &&
+                    branchTrackingFiles.containsKey(fileName)
+                    &&
+                    !currentTrackingFiles.containsKey(fileName)) {
+                checkout(branchNameCommitUid, fileName);
+            } else if (splitPointTrackingFiles.containsKey(fileName)
+                    &&
+                    currentTrackingFiles.containsKey(fileName)
+                    &&
+                    !branchTrackingFiles.containsKey(fileName)) {
+                String currentTrackingFileUid = currentTrackingFiles.get(fileName);
+                String splitPointTrackingFileUid = splitPointTrackingFiles.get(fileName);
+                if (splitPointTrackingFileUid.equals(currentTrackingFileUid)) {
+                    try {
+                        rm(fileName);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+
+    }
+
+    private static boolean conflictCheck(String fileName,
+                                         Map<String, String> currentTrackingFile,
+                                         Map<String, String> splitPointTrackingFile,
+                                         Map<String, String> branchTrackingFile) {
+        if (currentTrackingFile.containsKey(fileName)
+                &&
+                splitPointTrackingFile.containsKey(fileName)
+                &&
+                branchTrackingFile.containsKey(fileName)) {
+            return !currentTrackingFile.get(fileName).equals(branchTrackingFile.get(fileName))
+                    &&
+                    !splitPointTrackingFile.get(fileName).equals(branchTrackingFile.get(fileName))
+                    &&
+                    !splitPointTrackingFile.get(fileName).equals
+                            (currentTrackingFile.get(fileName));
+        }
+        if (!currentTrackingFile.containsKey(fileName)
+                &&
+                splitPointTrackingFile.containsKey(fileName)
+                &&
+                branchTrackingFile.containsKey(fileName)) {
+            return !splitPointTrackingFile.get(fileName).equals(branchTrackingFile.get(fileName));
+        }
+        if (!branchTrackingFile.containsKey(fileName)
+                &&
+                splitPointTrackingFile.containsKey(fileName)
+                &&
+                currentTrackingFile.containsKey(fileName)) {
+            return !splitPointTrackingFile.get(fileName).equals(currentTrackingFile.get(fileName));
+        }
+        if (!splitPointTrackingFile.containsKey(fileName)
+                &&
+                currentTrackingFile.containsKey(fileName)
+                &&
+                branchTrackingFile.containsKey(fileName)) {
+            return !currentTrackingFile.get(fileName).equals(branchTrackingFile.get(fileName));
+        }
+        return false;
+    }
+
+    private static void inConflict(String fileName,
+                                   Map<String, String> currentTrackingFile,
+                                   Map<String, String> branchTrackingFile) {
+        String currentTrackingFileUid = currentTrackingFile.get(fileName);
+        String currentTrackingFileContent = "";
+        if (currentTrackingFileUid != null) {
+            currentTrackingFileContent = Utils.readContentsAsString(join(GITLET_BLOB,
+                    currentTrackingFileUid));
+        }
+        String branchTrackingFileContent = "";
+        String branchTrackingFileUid = branchTrackingFile.get(fileName);
+        if (branchTrackingFileUid != null) {
+            branchTrackingFileContent = Utils.readContentsAsString(join(GITLET_BLOB,
+                    branchTrackingFileUid));
+        }
+        String fileContent =
+                "<<<<<<< HEAD\n" + currentTrackingFileContent + "=======\n" +
+                        branchTrackingFileContent + ">>>>>>>";
+        Utils.writeContents(join(CWD, fileName), fileContent);
+        try {
+            add(fileName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static String getSplitPointUid(Commit branchNameCommit) {
+        Set<String> currentParentCommit = new HashSet<>();
+        Commit res = getCurrentCommit();
+        while (res != null) {
+            currentParentCommit.add(res.getUID());
+            if (res.getParent() == null) {
+                break;
+            } else {
+                res = Utils.readObject(join(GITLET_COMMIT, res.getParent()), Commit.class);
+            }
+        }
+        Commit temp = branchNameCommit;
+        while (temp != null) {
+            if (currentParentCommit.contains(temp)) {
+                return temp.getUID();
+            } else {
+                if (temp.getParent() == null) {
+                    break;
+                } else {
+                    temp = Utils.readObject(join(GITLET_COMMIT, temp.getParent()), Commit.class);
+                }
+            }
+        }
+        return null;
+    }
 }
