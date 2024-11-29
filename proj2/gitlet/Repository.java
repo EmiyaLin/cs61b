@@ -792,7 +792,7 @@ public class Repository {
         }
         Commit temp = branchNameCommit;
         while (temp != null) {
-            if (currentParentCommit.contains(temp)) {
+            if (currentParentCommit.contains(temp.getUID())) {
                 return temp.getUID();
             } else {
                 if (temp.getParent() == null) {
