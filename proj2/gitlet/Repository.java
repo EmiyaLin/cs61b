@@ -732,11 +732,13 @@ public class Repository {
         if (!hasConflict) {
             String currentCommitName = getCurrentCommit().getBranch();
             try {
-                mergeCommit("Merged " + branchName + " into " + currentCommitName,
+                mergeCommit("Merged " + branchName + " into " + currentCommitName + ".",
                         branchNameCommitUid);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
+        } else {
+            System.out.println("Encountered a merge conflict.");
         }
     }
 
