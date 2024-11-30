@@ -832,10 +832,21 @@ public class Repository {
             branchTrackingFileContent = Utils.readContentsAsString(join(GITLET_BLOB,
                     branchTrackingFileUid));
         }
-        String fileContent =
-                "<<<<<<< HEAD\n" + currentTrackingFileContent + "\n=======\n" +
-                        branchTrackingFileContent + "\n>>>>>>>";
-        Utils.writeContents(join(CWD, fileName), fileContent);
+        StringBuilder sb = new StringBuilder();
+        sb.append("<<<<<<< HEAD");
+        sb.append("\n");
+        sb.append(currentTrackingFileContent);
+        if (currentTrackingFileUid != null) {
+            sb.append("\n");
+        }
+        sb.append("=======");
+        sb.append("\n");
+        sb.append(branchTrackingFileContent);
+        if (branchTrackingFileUid != null) {
+            sb.append("\n");
+        }
+        sb.append(">>>>>>>");
+        Utils.writeContents(join(CWD, fileName), sb.toString());
         try {
             add(fileName);
         } catch (IOException e) {
