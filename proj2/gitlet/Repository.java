@@ -709,6 +709,11 @@ public class Repository {
                         &&
                         splitPointTrackingFileUid.equals(currentTrackingFileUid)) {
                     checkout(branchNameCommitUid, fileName);
+                    try {
+                        add(fileName);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             } else if (!splitPointTrackingFiles.containsKey(fileName)
                     &&
@@ -716,6 +721,11 @@ public class Repository {
                     &&
                     !currentTrackingFiles.containsKey(fileName)) {
                 checkout(branchNameCommitUid, fileName);
+                try {
+                    add(fileName);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
             } else if (splitPointTrackingFiles.containsKey(fileName)
                     &&
                     currentTrackingFiles.containsKey(fileName)
@@ -823,7 +833,7 @@ public class Repository {
                     branchTrackingFileUid));
         }
         String fileContent =
-                "<<<<<<< HEAD\n" + currentTrackingFileContent + "=======\n" +
+                "<<<<<<< HEAD\n" + currentTrackingFileContent + "\n=======\n" +
                         branchTrackingFileContent + ">>>>>>>";
         Utils.writeContents(join(CWD, fileName), fileContent);
         try {
