@@ -665,6 +665,23 @@ public class Repository {
         checkoutBranch(currentBranchName, false);
     }
 
+    private static void mergeFailureCheck(String branchName) {
+        if (branchName.equals("") || !join(BRANCH, branchName).exists()) {
+            System.out.println("A branch with that name does not exist.");
+            System.exit(0);
+        }
+        List<String> stagingFiles = Utils.plainFilenamesIn(GITLET_STAGINGAREA);
+        List<String> removalFiles = Utils.plainFilenamesIn(GITLET_REMOVALAREA);
+        if (!stagingFiles.isEmpty() || !removalFiles.isEmpty()) {
+            System.out.println("You have uncommitted changes.");
+            System.exit(0);
+        }
+        if (Utils.readContentsAsString(CURRENT_BRANCH).equals(branchName)) {
+            System.out.println("Cannot merge a branch with itself.");
+            System.exit(0);
+        }
+    }
+
     public static void merge(String branchName) {
         if (branchName.equals("") || !join(BRANCH, branchName).exists()) {
             System.out.println("A branch with that name does not exist.");
