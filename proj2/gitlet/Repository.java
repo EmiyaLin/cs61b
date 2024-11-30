@@ -833,7 +833,7 @@ public class Repository {
                     branchTrackingFileUid));
         }
         String fileContent =
-                "<<<<<<< HEAD\n" + currentTrackingFileContent + "\n=======\n" +
+                "<<<<<<< HEAD\n" + currentTrackingFileContent + "=======\n" +
                         branchTrackingFileContent + ">>>>>>>";
         Utils.writeContents(join(CWD, fileName), fileContent);
         try {
