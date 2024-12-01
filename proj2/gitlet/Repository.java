@@ -711,9 +711,17 @@ public class Repository {
         Map<String, String> currentTrackingFiles = getCurrentCommit().getTrackingFile();
         Map<String, String> branchTrackingFiles = branchNameCommit.getTrackingFile();
         Map<String, String> splitPointTrackingFiles = splitPoint.getTrackingFile();
+        mergeHelper(currentTrackingFiles, branchTrackingFiles, splitPointTrackingFiles, branchName);
+    }
+
+    private static void mergeHelper(Map<String, String> currentTrackingFiles,
+                                    Map<String, String> branchTrackingFiles,
+                                    Map<String, String> splitPointTrackingFiles,
+                                    String branchName) {
         Set<String> fileNames = new HashSet<>();
         fileNames.addAll(currentTrackingFiles.keySet());
         fileNames.addAll(branchTrackingFiles.keySet());
+        String branchNameCommitUid = Utils.readContentsAsString(join(BRANCH, branchName));
         boolean hasConflict = false;
         for (String fileName : fileNames) {
             if (conflictCheck(fileName, currentTrackingFiles, splitPointTrackingFiles,
@@ -863,8 +871,15 @@ public class Repository {
                     branchTrackingFileUid));
         }
         String fileContent =
-                "<<<<<<< HEAD\n" + currentTrackingFileContent + "=======\n" +
-                        branchTrackingFileContent + ">>>>>>>\n";
+                "<<<<<<< HEAD\n"
+                        +
+                        currentTrackingFileContent
+                        + 
+                        "=======\n"
+                        +
+                        branchTrackingFileContent
+                        +
+                        ">>>>>>>\n";
         Utils.writeContents(join(CWD, fileName), fileContent);
         try {
             add(fileName);
