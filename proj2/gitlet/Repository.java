@@ -768,6 +768,13 @@ public class Repository {
                 throw new RuntimeException(e);
             }
         } else {
+            String currentCommitName = getCurrentCommit().getBranch();
+            try {
+                mergeCommit("Merged " + branchName + " into " + currentCommitName + ".",
+                        branchNameCommitUid);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
             System.out.println("Encountered a merge conflict.");
         }
     }
