@@ -680,13 +680,19 @@ public class Repository {
             System.out.println("Cannot merge a branch with itself.");
             System.exit(0);
         }
+        String branchCommitUid = Utils.readContentsAsString(join(BRANCH, branchName));
+        Commit branchCommit = Utils.readObject(join(GITLET_COMMIT, branchCommitUid), Commit.class);
+        if (untrackedFileCheck(branchCommit.getTrackingFile(),
+                getCurrentCommit().getTrackingFile())) {
+            System.out.println("There is an untracked file in the way; "
+                    +
+                    "delete it, or add and commit it first.");
+            System.exit(0);
+        }
     }
 
     public static void merge(String branchName) {
-        if (branchName.equals("") || !join(BRANCH, branchName).exists()) {
-            System.out.println("A branch with that name does not exist.");
-            System.exit(0);
-        }
+        mergeFailureCheck(branchName);
         String currentCommitUid = getCurrentCommit().getUID();
         String branchNameCommitUid = Utils.readContentsAsString(join(BRANCH, branchName));
         Commit branchNameCommit = getCommit(branchNameCommitUid);
@@ -867,27 +873,35 @@ public class Repository {
         }
     }
 
+    // 要考虑有的commit会有两个parent的情况，并且我们需要找最近的公共祖先
     private static String getSplitPointUid(Commit branchNameCommit) {
         Set<String> currentParentCommit = new HashSet<>();
         Commit res = getCurrentCommit();
-        while (res != null) {
-            currentParentCommit.add(res.getUID());
-            if (res.getParent() == null) {
-                break;
-            } else {
-                res = Utils.readObject(join(GITLET_COMMIT, res.getParent()), Commit.class);
+        Queue<Commit> queue = new LinkedList<>();
+        queue.add(res);
+        while (!queue.isEmpty()) {
+            Commit top = queue.remove();
+            currentParentCommit.add(top.getUID());
+            if (top.getParent() != null) {
+                queue.add(Utils.readObject(join(GITLET_COMMIT, top.getParent()), Commit.class));
+            }
+            if (top.getSecondParent() != null) {
+                queue.add(Utils.readObject(join(GITLET_COMMIT, top.getSecondParent()),
+                        Commit.class));
             }
         }
-        Commit temp = branchNameCommit;
-        while (temp != null) {
-            if (currentParentCommit.contains(temp.getUID())) {
-                return temp.getUID();
-            } else {
-                if (temp.getParent() == null) {
-                    break;
-                } else {
-                    temp = Utils.readObject(join(GITLET_COMMIT, temp.getParent()), Commit.class);
-                }
+        queue.add(branchNameCommit);
+        while (!queue.isEmpty()) {
+            Commit top = queue.remove();
+            if (currentParentCommit.contains(top.getUID())) {
+                return top.getUID();
+            }
+            if (top.getParent() != null) {
+                queue.add(Utils.readObject(join(GITLET_COMMIT, top.getParent()), Commit.class));
+            }
+            if (top.getSecondParent() != null) {
+                queue.add(Utils.readObject(join(GITLET_COMMIT, top.getSecondParent()),
+                        Commit.class));
             }
         }
         return null;
