@@ -939,4 +939,41 @@ public class Repository {
         }
         join(REMOTE, name).delete();
     }
+
+    public static void push(String remoteName, String remoteBranchName) {
+        String location = Utils.readContentsAsString(join(REMOTE, remoteName));
+        File remoteGitlet = new File(location);
+        if (!remoteGitlet.exists()) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        String remoteCommitUid = Utils.readContentsAsString(join(remoteGitlet, "branch",
+                remoteBranchName));
+        Commit remoteCommit = Utils.readObject(join(remoteGitlet, "commit", remoteCommitUid)
+                , Commit.class);
+        Commit currentCommit = getCurrentCommit();
+        Commit appendCommit = new Commit(currentCommit.getMessage(), currentCommit.getTimestamp()
+                , remoteCommit.getParent(), currentCommit.getTrackingFile(),
+                Collections.emptyList(), Collections.emptyList(),
+                remoteBranchName);
+        if (!pullDownCheck(getCommit(currentCommit.getParent()), remoteCommitUid)) {
+            System.out.println("Please pull down remote changes before pushing.");
+            System.exit(0);
+        }
+        Utils.writeObject(join(remoteGitlet, "commit", appendCommit.getUID()),
+                appendCommit);
+        Utils.writeContents(join(remoteGitlet, "HEAD"), appendCommit.getUID());
+        Utils.writeContents(join(remoteGitlet, remoteBranchName, appendCommit.getBranch()),
+                appendCommit.getUID());
+    }
+
+    private static boolean pullDownCheck(Commit commit, String checkUid) {
+        while (commit.getParent() != null) {
+            if (commit.getUID().equals(checkUid)) {
+                return true;
+            }
+            commit = getCommit(commit.getParent());
+        }
+        return checkUid.equals(commit.getUID());
+    }
 }
