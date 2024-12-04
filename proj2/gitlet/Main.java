@@ -94,37 +94,57 @@ public class Main {
                 if (args.length == 2) {
                     String branch = args[1];
                     Repository.createBranch(branch);
+                } else {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
                 }
                 break;
             case "find":
                 if (args.length == 2) {
                     String commitMessage = args[1];
                     Repository.find(commitMessage);
+                } else {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
                 }
                 break;
             case "status":
                 Repository.showStatus();
                 break;
             case "rm-branch":
-                if (args.length < 2) {
+                if (args.length != 2) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
                 Repository.rmBranch(args[1]);
                 break;
             case "reset":
-                if (args.length < 2) {
+                if (args.length != 2) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
                 Repository.reset(args[1]);
                 break;
             case "merge":
-                if (args.length < 2) {
+                if (args.length != 2) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
                 Repository.merge(args[1]);
+                break;
+            case "add-remote":
+                if (args.length != 3) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.add_remote(args[1], args[2]);
+                break;
+            case "rm-remote":
+                if (args.length != 2) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.rm_remote(args[1]);
                 break;
             default:
                 System.out.println("No command with that name exists.");

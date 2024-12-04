@@ -47,7 +47,8 @@ public class Repository {
 
     public static final File CURRENT_BRANCH = join(GITLET_DIR, "current_branch");
 
-    private static String master;
+    public static final File REMOTE = join(GITLET_DIR, "remote");
+
 
 //    private static Set<String> stagingFilesSet = new HashSet<>();
 
@@ -68,12 +69,12 @@ public class Repository {
     public static void init() throws IOException {
         GITLET_DIR.mkdir();
         Commit initialCommit = new Commit();
-        master = initialCommit.getUID();
         GITLET_COMMIT.mkdir();
         GITLET_BLOB.mkdir();
         GITLET_STAGINGAREA.mkdir();
         GITLET_REMOVALAREA.mkdir();
         BRANCH.mkdir();
+        REMOTE.mkdir();
         HEAD.createNewFile();
         MASTER.createNewFile();
         INITIALCOMMIT.createNewFile();
@@ -920,5 +921,22 @@ public class Repository {
             }
         }
         return null;
+    }
+
+    public static void add_remote(String name, String location) {
+        if (join(REMOTE, name).exists()) {
+            System.out.println("A remote with that name already exists.");
+            System.exit(0);
+        }
+        String[] locationList = location.split("/");
+        Utils.writeContents(join(REMOTE, name), String.join(File.separator, locationList));
+    }
+
+    public static void rm_remote(String name) {
+        if (!join(REMOTE, name).exists()) {
+            System.out.println("A remote with that name does not exist.");
+            System.exit(0);
+        }
+        join(REMOTE, name).delete();
     }
 }
