@@ -874,7 +874,7 @@ public class Repository {
                 "<<<<<<< HEAD\n"
                         +
                         currentTrackingFileContent
-                        + 
+                        +
                         "=======\n"
                         +
                         branchTrackingFileContent
