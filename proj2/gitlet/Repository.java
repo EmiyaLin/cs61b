@@ -999,7 +999,7 @@ public class Repository {
             System.exit(0);
         }
         Commit remoteCommit = getRemoteCommit(remoteName, remoteBranchName);
-        String remoteBranch = remoteName + "/" + remoteBranchName;
+        String remoteBranch = remoteName + "%2F" + remoteBranchName;
         createBranch(remoteBranch, remoteCommit.getUID());
         Utils.writeContents(HEAD, remoteCommit.getUID());
         Utils.writeContents(CURRENT_BRANCH, remoteBranch);
@@ -1019,5 +1019,10 @@ public class Repository {
                 queue.add(getCommit(temp.getSecondParent()));
             }
         }
+    }
+
+    public static void pull(String remoteName, String remoteBranchName) {
+        fetch(remoteName, remoteBranchName);
+        merge(remoteName + "%2F" + remoteBranchName);
     }
 }
