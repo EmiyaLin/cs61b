@@ -940,7 +940,7 @@ public class Repository {
         join(REMOTE, name).delete();
     }
 
-    public static void push(String remoteName, String remoteBranchName) {
+    private static Commit getRemoteCommit(String remoteName, String remoteBranchName) {
         String location = Utils.readContentsAsString(join(REMOTE, remoteName));
         File remoteGitlet = new File(location);
         if (!remoteGitlet.exists()) {
@@ -949,17 +949,23 @@ public class Repository {
         }
         String remoteCommitUid = Utils.readContentsAsString(join(remoteGitlet, "branch",
                 remoteBranchName));
-        Commit remoteCommit = Utils.readObject(join(remoteGitlet, "commit", remoteCommitUid)
+        return Utils.readObject(join(remoteGitlet, "commit", remoteCommitUid)
                 , Commit.class);
+    }
+
+    public static void push(String remoteName, String remoteBranchName) {
+        Commit remoteCommit = getRemoteCommit(remoteName, remoteBranchName);
         Commit currentCommit = getCurrentCommit();
         Commit appendCommit = new Commit(currentCommit.getMessage(), currentCommit.getTimestamp()
                 , remoteCommit.getParent(), currentCommit.getTrackingFile(),
                 Collections.emptyList(), Collections.emptyList(),
                 remoteBranchName);
-        if (!pullDownCheck(getCommit(currentCommit.getParent()), remoteCommitUid)) {
+        if (!pullDownCheck(getCommit(currentCommit.getParent()), remoteCommit.getUID())) {
             System.out.println("Please pull down remote changes before pushing.");
             System.exit(0);
         }
+        String location = Utils.readContentsAsString(join(REMOTE, remoteName));
+        File remoteGitlet = new File(location);
         Utils.writeObject(join(remoteGitlet, "commit", appendCommit.getUID()),
                 appendCommit);
         Utils.writeContents(join(remoteGitlet, "HEAD"), appendCommit.getUID());
@@ -975,5 +981,43 @@ public class Repository {
             commit = getCommit(commit.getParent());
         }
         return checkUid.equals(commit.getUID());
+    }
+
+    private static void createBranch(String branch, String commitUid) {
+        List<String> existingBranch = Utils.plainFilenamesIn(BRANCH);
+        if (existingBranch.contains(branch)) {
+            System.out.println("A branch with that name already exists.");
+            System.exit(0);
+        }
+        Utils.writeContents(join(BRANCH, branch), commitUid);
+    }
+
+    public static void fetch(String remoteName, String remoteBranchName) {
+        List<String> remoteNameList = Utils.plainFilenamesIn(REMOTE);
+        if (!remoteNameList.contains(remoteName)) {
+            System.out.println("That remote does not have that branch.");
+            System.exit(0);
+        }
+        Commit remoteCommit = getRemoteCommit(remoteName, remoteBranchName);
+        String remoteBranch = remoteName + "/" + remoteBranchName;
+        createBranch(remoteBranch, remoteCommit.getUID());
+        Utils.writeContents(HEAD, remoteCommit.getUID());
+        Utils.writeContents(CURRENT_BRANCH, remoteBranch);
+        Queue<Commit> queue = new LinkedList<>();
+        queue.add(remoteCommit);
+        List<String> commitList = Utils.plainFilenamesIn(GITLET_COMMIT);
+        assert commitList != null;
+        while (!queue.isEmpty()) {
+            Commit temp = queue.remove();
+            if (!commitList.contains(temp.getUID())) {
+                Utils.writeObject(join(GITLET_COMMIT, temp.getUID()), temp);
+            }
+            if (temp.getParent() != null) {
+                queue.add(getCommit(temp.getParent()));
+            }
+            if (temp.getSecondParent() != null) {
+                queue.add(getCommit(temp.getSecondParent()));
+            }
+        }
     }
 }

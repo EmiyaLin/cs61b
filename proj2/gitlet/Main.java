@@ -152,6 +152,14 @@ public class Main {
                     System.exit(0);
                 }
                 Repository.push(args[1], args[2]);
+                break;
+            case "fetch":
+                if (args.length != 3) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.fetch(args[1], args[2]);
+                break;
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);
