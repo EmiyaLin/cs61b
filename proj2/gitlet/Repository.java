@@ -983,13 +983,14 @@ public class Repository {
         return checkUid.equals(commit.getUID());
     }
 
-    private static void createBranch(String branch, String commitUid) {
-        List<String> existingBranch = Utils.plainFilenamesIn(BRANCH);
-        if (existingBranch.contains(branch)) {
+    private static void createBranch(String remoteName, String remoteBranchName, String commitUid) {
+        List<String> existingBranch = Utils.plainFilenamesIn(join(BRANCH, remoteName));
+        if (existingBranch != null && existingBranch.contains(remoteBranchName)) {
             System.out.println("A branch with that name already exists.");
             System.exit(0);
         }
-        Utils.writeContents(join(BRANCH, branch), commitUid);
+        join(BRANCH, remoteName).mkdir();
+        Utils.writeContents(join(BRANCH, remoteName, remoteBranchName), commitUid);
     }
 
     public static void fetch(String remoteName, String remoteBranchName) {
@@ -999,10 +1000,9 @@ public class Repository {
             System.exit(0);
         }
         Commit remoteCommit = getRemoteCommit(remoteName, remoteBranchName);
-        String remoteBranch = remoteName + "%2F" + remoteBranchName;
-        createBranch(remoteBranch, remoteCommit.getUID());
+        createBranch(remoteName, remoteBranchName, remoteCommit.getUID());
         Utils.writeContents(HEAD, remoteCommit.getUID());
-        Utils.writeContents(CURRENT_BRANCH, remoteBranch);
+        Utils.writeContents(CURRENT_BRANCH, remoteName + "/" + remoteBranchName);
         Queue<Commit> queue = new LinkedList<>();
         queue.add(remoteCommit);
         List<String> commitList = Utils.plainFilenamesIn(GITLET_COMMIT);
@@ -1023,6 +1023,6 @@ public class Repository {
 
     public static void pull(String remoteName, String remoteBranchName) {
         fetch(remoteName, remoteBranchName);
-        merge(remoteName + "%2F" + remoteBranchName);
+        merge(remoteName + "/" + remoteBranchName);
     }
 }
