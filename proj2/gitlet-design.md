@@ -97,6 +97,8 @@
 │└── eb36cd323bdfb13f501cfce49231dea186e24711
 ├── current_branch
 ├── initialCommit
+├── remote
+│└── test
 ├── removalArea
 │└── a.txt
 └── stagingArea
@@ -109,3 +111,19 @@ current_branch用于保存当前分支，内容是当前分支的名称
 initialCommit用于保存初始提交，即init指令自动生成的提交，内容是初始提交的序列化内容
 removalArea用于保存被移除跟踪的文件，里面存文件的copy
 stagingArea用于保存被暂存的文件，里面存文件的copy
+
+### 远程功能
+五个指令 
+1. add-remote `java gitlet.Main add-remote [remote name] [name of remote directory]/.gitlet`
+2. rm-remote `java gitlet.Main rm-remote [remote name]`
+3. push `java gitlet.Main push [remote name] [remote branch name]`
+4. fetch `java gitlet.Main fetch [remote name] [remote branch name]`
+5. pull `java gitlet.Main pull [remote name] [remote branch name]`
+
+#### add-remote 功能是添加远程库，我是单独建了个文件夹`remote`，专门用来存放远程，文件名为remote name, 内容是地址。
+
+#### rm-remote 功能是删除远程库，直接删除文件就好
+
+#### push 功能是当某个给定远程库的某个给定分支落后于当前的HEAD，那么就把HEAD到远程库的给定分支HEAD之间的所有commit全部copy到远程库的给定分支里，其实也没有这么麻烦，直接全部扔到`commit`和`blob`里就好，因为我的每个commit都有记载parent，最后要修改远程库的HEAD和给定分支指向的commit
+
+#### fetch 功能与push功能相反（某种程度上吧），将给定远程库的远程分支里的所有commit和blob都copy到本地库，如果本地库没有的话，并且新建一个`remote/remote branch name`的分支（这里非常无语，文件系统会把这里的`/`当作下一级目录，会出现文件读写问题，所以干脆把分支名强制修改为`remote:remote branch name`，读取的时候将`/`转化为`:`）,最后修改HEAD和`remote:remote branch name`branch指向的Commit
