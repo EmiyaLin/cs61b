@@ -1,8 +1,9 @@
 # Gitlet Design Document
-### 2024.11.1 - 2024.12.1
+### 2024.11.1 - 2024.12.1  basic function
+### 2024.12.5 - 2024.12.10 remote function
 **Name**: Xinran Zhao
 
-本项目是来自于CS61b的proj2，其内容是用java实现对版本管理Git的模仿，最后的成品是一个简化版的git，暂时还不支持远程功能（我有点偷懒了，以后再做吧）.
+本项目是来自于CS61b的proj2，其内容是用java实现对版本管理Git的模仿，最后的成品是一个简化版的git，支持远程功能，这里说的远程指的是git库之间的交互，传输层的协议实现不了.
 整个项目大概1500行左右，前前后后弄了一个月时间。
 
 ## Classes and Data Structures
