@@ -971,21 +971,29 @@ public class Repository {
     public static void push(String remoteName, String remoteBranchName) {
         Commit remoteCommit = getRemoteHeadCommit(remoteName, remoteBranchName);
         Commit currentCommit = getCurrentCommit();
-        Commit appendCommit = new Commit(currentCommit.getMessage(), currentCommit.getTimestamp()
-                , remoteCommit.getParent(), currentCommit.getTrackingFile(),
-                Collections.emptyList(), Collections.emptyList(),
-                remoteBranchName);
         if (!pullDownCheck(getCommit(currentCommit.getParent()), remoteCommit.getUID())) {
             System.out.println("Please pull down remote changes before pushing.");
             System.exit(0);
         }
         String location = Utils.readContentsAsString(join(REMOTE, remoteName));
         File remoteGitlet = new File(location);
-        Utils.writeObject(join(remoteGitlet, "commit", appendCommit.getUID()),
-                appendCommit);
-        Utils.writeContents(join(remoteGitlet, "HEAD"), appendCommit.getUID());
-        Utils.writeContents(join(remoteGitlet, remoteBranchName, appendCommit.getBranch()),
-                appendCommit.getUID());
+        Commit temp = currentCommit;
+        List<String> remoteBlobList = Utils.plainFilenamesIn(join(remoteGitlet, "blob"));
+        assert remoteBlobList != null;
+        while (!temp.getUID().equals(remoteCommit.getUID())) {
+            Utils.writeObject(join(remoteGitlet, "commit", temp.getUID()), temp);
+            Map<String, String> trackingFile = temp.getTrackingFile();
+            for (String trackingFileUid : trackingFile.values()) {
+                if (!remoteBlobList.contains(trackingFileUid)) {
+                    Utils.writeContents(join(remoteGitlet, "blob", trackingFileUid),
+                            Utils.readContentsAsString(join(GITLET_BLOB, trackingFileUid)));
+                }
+            }
+            temp = getCommit(temp.getParent());
+        }
+        Utils.writeContents(join(remoteGitlet, "HEAD"), currentCommit.getUID());
+        Utils.writeContents(join(remoteGitlet, "branch", remoteBranchName),
+                currentCommit.getUID());
     }
 
     private static boolean pullDownCheck(Commit commit, String checkUid) {

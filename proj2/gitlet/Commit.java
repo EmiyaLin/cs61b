@@ -138,7 +138,9 @@ public class Commit implements Serializable {
         this.UID = Utils.sha1(message, timestamp.toString(), parent, trackingFile.toString());
     }
 
-
+    public void setParent(String uid) {
+        this.parent = uid;
+    }
 
     public String getUID() {
         return UID;
