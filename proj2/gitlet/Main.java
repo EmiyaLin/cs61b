@@ -137,14 +137,14 @@ public class Main {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
-                Repository.add_remote(args[1], args[2]);
+                Repository.addRemote(args[1], args[2]);
                 break;
             case "rm-remote":
                 if (args.length != 2) {
                     System.out.println("Incorrect operands.");
                     System.exit(0);
                 }
-                Repository.rm_remote(args[1]);
+                Repository.rmRemote(args[1]);
                 break;
             case "push":
                 if (args.length != 3) {

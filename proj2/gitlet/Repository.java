@@ -935,7 +935,7 @@ public class Repository {
         return null;
     }
 
-    public static void add_remote(String name, String location) {
+    public static void addRemote(String name, String location) {
         if (join(REMOTE, name).exists()) {
             System.out.println("A remote with that name already exists.");
             System.exit(0);
@@ -944,7 +944,7 @@ public class Repository {
         Utils.writeContents(join(REMOTE, name), String.join(File.separator, locationList));
     }
 
-    public static void rm_remote(String name) {
+    public static void rmRemote(String name) {
         if (!join(REMOTE, name).exists()) {
             System.out.println("A remote with that name does not exist.");
             System.exit(0);
@@ -961,8 +961,8 @@ public class Repository {
         }
         String remoteCommitUid = Utils.readContentsAsString(join(remoteGitlet, "branch",
                 remoteBranchName));
-        return Utils.readObject(join(remoteGitlet, "commit", remoteCommitUid)
-                , Commit.class);
+        return Utils.readObject(join(remoteGitlet, "commit",
+                remoteCommitUid), Commit.class);
     }
 
     private static Commit getRemoteCommit(String remoteName, String remoteCommitUid) {
@@ -972,8 +972,8 @@ public class Repository {
             System.out.println("Remote directory not found.");
             System.exit(0);
         }
-        return Utils.readObject(join(remoteGitlet, "commit", remoteCommitUid)
-                , Commit.class);
+        return Utils.readObject(join(remoteGitlet, "commit",
+                        remoteCommitUid), Commit.class);
     }
 
     public static void push(String remoteName, String remoteBranchName) {
