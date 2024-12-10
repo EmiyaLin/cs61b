@@ -697,6 +697,10 @@ public class Repository {
     }
 
     public static void merge(String branchName) {
+        if (branchName.contains("/")) {
+            String[] temp = branchName.split("/");
+            branchName = String.join(":", temp);
+        }
         mergeFailureCheck(branchName);
         String currentCommitUid = getCurrentCommit().getUID();
         String branchNameCommitUid = Utils.readContentsAsString(join(BRANCH, branchName));
@@ -777,6 +781,10 @@ public class Repository {
                     }
                 }
             }
+        }
+        if (branchName.contains(":")) {
+            String[] temp = branchName.split(":");
+            branchName = String.join("/", temp);
         }
         if (!hasConflict) {
             String currentCommitName = getCurrentCommit().getBranch();
@@ -1008,12 +1016,6 @@ public class Repository {
 
     private static void createBranch(String remoteName, String remoteBranchName,
                                      String commitUid) {
-        List<String> existingBranch = Utils.plainFilenamesIn(BRANCH);
-        if (existingBranch != null && existingBranch.contains(remoteName + ":"
-                + remoteBranchName)) {
-            System.out.println("A branch with that name already exists.");
-            System.exit(0);
-        }
         File file = join(BRANCH, remoteName + ":" + remoteBranchName);
         try {
             file.createNewFile();
@@ -1024,8 +1026,14 @@ public class Repository {
     }
 
     public static void fetch(String remoteName, String remoteBranchName) {
-        List<String> remoteNameList = Utils.plainFilenamesIn(REMOTE);
-        if (!remoteNameList.contains(remoteName)) {
+        String location = Utils.readContentsAsString(join(REMOTE, remoteName));
+        File remoteGitlet = new File(location);
+        if (!remoteGitlet.exists()) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        List<String> remoteNameList = Utils.plainFilenamesIn(join(location, "branch"));
+        if (!remoteNameList.contains(remoteBranchName)) {
             System.out.println("That remote does not have that branch.");
             System.exit(0);
         }
@@ -1062,6 +1070,6 @@ public class Repository {
 
     public static void pull(String remoteName, String remoteBranchName) {
         fetch(remoteName, remoteBranchName);
-        merge(remoteName + ":" + remoteBranchName);
+        merge(remoteName + "/" + remoteBranchName);
     }
 }
