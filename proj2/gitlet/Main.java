@@ -160,6 +160,12 @@ public class Main {
                 }
                 Repository.fetch(args[1], args[2]);
                 break;
+            case "pull":
+                if (args.length != 3) {
+                    System.out.println("Incorrect operands.");
+                    System.exit(0);
+                }
+                Repository.pull(args[1], args[2]);
             default:
                 System.out.println("No command with that name exists.");
                 System.exit(0);

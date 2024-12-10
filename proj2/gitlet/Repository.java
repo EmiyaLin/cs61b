@@ -944,7 +944,7 @@ public class Repository {
         join(REMOTE, name).delete();
     }
 
-    private static Commit getRemoteCommit(String remoteName, String remoteBranchName) {
+    private static Commit getRemoteHeadCommit(String remoteName, String remoteBranchName) {
         String location = Utils.readContentsAsString(join(REMOTE, remoteName));
         File remoteGitlet = new File(location);
         if (!remoteGitlet.exists()) {
@@ -957,8 +957,19 @@ public class Repository {
                 , Commit.class);
     }
 
+    private static Commit getRemoteCommit(String remoteName, String remoteCommitUid) {
+        String location = Utils.readContentsAsString(join(REMOTE, remoteName));
+        File remoteGitlet = new File(location);
+        if (!remoteGitlet.exists()) {
+            System.out.println("Remote directory not found.");
+            System.exit(0);
+        }
+        return Utils.readObject(join(remoteGitlet, "commit", remoteCommitUid)
+                , Commit.class);
+    }
+
     public static void push(String remoteName, String remoteBranchName) {
-        Commit remoteCommit = getRemoteCommit(remoteName, remoteBranchName);
+        Commit remoteCommit = getRemoteHeadCommit(remoteName, remoteBranchName);
         Commit currentCommit = getCurrentCommit();
         Commit appendCommit = new Commit(currentCommit.getMessage(), currentCommit.getTimestamp()
                 , remoteCommit.getParent(), currentCommit.getTrackingFile(),
@@ -987,9 +998,11 @@ public class Repository {
         return checkUid.equals(commit.getUID());
     }
 
-    private static void createBranch(String remoteName, String remoteBranchName, String commitUid) {
-        List<String> existingBranch = Utils.plainFilenamesIn(join(BRANCH, remoteName));
-        if (existingBranch != null && existingBranch.contains(remoteBranchName)) {
+    private static void createBranch(String remoteName, String remoteBranchName,
+                                     String commitUid) {
+        List<String> existingBranch = Utils.plainFilenamesIn(BRANCH);
+        if (existingBranch != null && existingBranch.contains(remoteName + ":"
+                + remoteBranchName)) {
             System.out.println("A branch with that name already exists.");
             System.exit(0);
         }
@@ -1008,24 +1021,33 @@ public class Repository {
             System.out.println("That remote does not have that branch.");
             System.exit(0);
         }
-        Commit remoteCommit = getRemoteCommit(remoteName, remoteBranchName);
+        copyRemoteCommits(remoteName, remoteBranchName);
+    }
+
+    private static void copyRemoteCommits(String remoteName, String remoteBranchName) {
+        Commit remoteCommit = getRemoteHeadCommit(remoteName, remoteBranchName);
         createBranch(remoteName, remoteBranchName, remoteCommit.getUID());
-        Utils.writeContents(HEAD, remoteCommit.getUID());
-        Utils.writeContents(CURRENT_BRANCH, remoteName + ":" + remoteBranchName);
         Queue<Commit> queue = new LinkedList<>();
         queue.add(remoteCommit);
         List<String> commitList = Utils.plainFilenamesIn(GITLET_COMMIT);
+        String location = Utils.readContentsAsString(join(REMOTE, remoteName));
         assert commitList != null;
         while (!queue.isEmpty()) {
             Commit temp = queue.remove();
+            Map<String, String> remoteTrackingFileMap = temp.getTrackingFile();
+            for (String trackingFileUid : remoteTrackingFileMap.values()) {
+                String trackingFileContent = Utils.readContentsAsString(join(location,
+                        "blob", trackingFileUid));
+                Utils.writeContents(join(GITLET_BLOB, trackingFileUid), trackingFileContent);
+            }
             if (!commitList.contains(temp.getUID())) {
                 Utils.writeObject(join(GITLET_COMMIT, temp.getUID()), temp);
             }
             if (temp.getParent() != null) {
-                queue.add(getCommit(temp.getParent()));
+                queue.add(getRemoteCommit(remoteName, temp.getParent()));
             }
             if (temp.getSecondParent() != null) {
-                queue.add(getCommit(temp.getSecondParent()));
+                queue.add(getRemoteCommit(remoteName, temp.getSecondParent()));
             }
         }
     }
